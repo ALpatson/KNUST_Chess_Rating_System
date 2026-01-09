@@ -9,4 +9,5 @@ urlpatterns = [
     # Matches and ranking
     path('matches/add/', views.MatchCreateView.as_view(), name='match_create'),
     path('players/ranking/', views.PlayerRankingView.as_view(), name='player_ranking'),
+    path('players/ranking/pdf/', views.PlayerRankingPDFView.as_view(), name='player_ranking_pdf'),
 ]

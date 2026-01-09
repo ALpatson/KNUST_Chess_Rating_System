@@ -7,7 +7,7 @@
     /* Professional Chess Ranking Table */
     .ranking-table-wrapper {
         background-color: rgba(30, 30, 30, 0.95);
-        border-radius: 8px;
+        border-radius: 15px;
         padding: 0;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         overflow: hidden;
@@ -38,7 +38,7 @@
     
     .table thead th {
         border: none;
-        color: #f0d9b5;
+        color: #e57a22; /* deeper brass tone for header labels */
         font-weight: 700;
         padding: 1.2rem 1.5rem;
         text-transform: uppercase;
@@ -73,6 +73,16 @@
         font-size: 1.3rem;
         width: 80px;
         text-align: center;
+    }
+
+    /* Podium emphasis for top-3: bold their row content (no color change) */
+    .podium-1 td, .podium-2 td, .podium-3 td {
+        font-weight: 700;
+    }
+
+    /* Slightly larger rank number for podium */
+    .podium-1 .rank-cell, .podium-2 .rank-cell, .podium-3 .rank-cell {
+        font-size: 1.45rem;
     }
     
     .name-cell {
@@ -116,6 +126,31 @@
         text-decoration: none;
     }
     
+    .print-button {
+        background-color: #b58863;
+        color: white;
+        padding: 0.7rem 1.8rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    
+    .print-button:hover {
+        background-color: #a0743f;
+        text-decoration: none;
+        color: white;
+    }
+    
+    .print-button:active {
+        transform: scale(0.98);
+    }
+
     @media (max-width: 768px) {
         .ranking-title {
             font-size: 1.3rem;
@@ -143,6 +178,11 @@
 
 <div class="row">
     <div class="col-12">
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{% url 'player_ranking_pdf' %}" class="print-button" download>
+                 Download PDF Rankings
+            </a>
+        </div>
         <div class="ranking-table-wrapper">
             <h1 class="ranking-title">KNUST Rankings</h1>
             <div class="table-responsive">
@@ -157,8 +197,13 @@
                     </thead>
                     <tbody>
                         {% for player in players %}
-                        <tr>
-                            <td class="rank-cell">{{ forloop.counter }}</td>
+                        <tr{% if forloop.counter <= 3 %} class="podium-{{ forloop.counter }}"{% endif %}>
+                            <td class="rank-cell">
+                                {% if forloop.counter == 1 %}🥇
+                                {% elif forloop.counter == 2 %}🥈
+                                {% elif forloop.counter == 3 %}🥉
+                                {% else %}{{ forloop.counter }}{% endif %}
+                            </td>
                             <td class="name-cell">{{ player.name }}</td>
                             <td class="rating-cell">{{ player.rating }}</td>
                             <td class="peak-cell">{{ player.peak_rating }}</td>

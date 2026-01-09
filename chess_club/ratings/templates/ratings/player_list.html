@@ -3,46 +3,131 @@
 {% block title %}Players{% endblock %}
 
 {% block content %}
-<h2 class="page-title">KCC Rated Players</h2>
+<style>
+    /* Reuse ranking-style table look for players list */
+    .ranking-table-wrapper-small {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        overflow: hidden;
+    }
+
+    .ranking-title-small {
+        background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+        color: #111;
+        padding: 1.2rem 1.6rem;
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #e6e6e6;
+    }
+
+    .ranking-table-small .table {
+        margin-bottom: 0;
+        background-color: transparent;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .ranking-table-small .table thead {
+        background-color: #f7f7f7;
+        border-bottom: 1px solid #e6e6e6;
+    }
+
+    .ranking-table-small .table thead th {
+        border: none;
+        color: #333;
+        font-weight: 700;
+        padding: 0.9rem 1rem;
+        text-transform: none;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+
+    .ranking-table-small .table tbody td {
+        padding: 0.95rem 1rem;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        font-size: 0.98rem;
+        color: #222;
+    }
+
+    .rank-cell-small {
+        font-weight: 800;
+        color: #b58863;
+        text-align: center;
+        width: 60px;
+    }
+
+    .name-cell-small {
+        font-weight: 600;
+        color: #111;
+    }
+
+    .rating-cell-small {
+        font-weight: 700;
+        color: #111;
+        text-align: center;
+    }
+
+    .peak-cell-small {
+        font-style: italic;
+        color: #666;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .ranking-title-small { font-size: 1.1rem; }
+        .ranking-table-small .table thead th, .ranking-table-small .table tbody td { padding: 0.7rem 0.6rem; }
+    }
+</style>
 
 <div class="row mb-4">
     <div class="col-12">
         <div style="display:flex;justify-content:center">
-            <a href="{% url 'player_create' %}" class="btn btn-hero">+ Add Player</a>
+            <a href="{% url 'player_create' %}" class="btn btn-hero" style="font-weight: bold; font-size: 1.1rem;">+ Add Player</a>
         </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th style="width:8%">S.No</th>
-                    <th style="width:35%">Name</th>
-                    <th style="width:20%">Rating</th>
-                    <th style="width:20%">Peak Rating</th>
-                    <th style="width:17%">Games</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in players %}
-                    <tr>
-                        <td><strong>{{ forloop.counter }}</strong></td>
-                        <td>{{ player.name }}</td>
-                        <td><span class="badge rating-badge" style="font-size:0.9rem;padding:0.5rem 0.8rem;background-color:#0066ff">{{ player.rating }}</span></td>
-                        <td><strong>{{ player.peak_rating }}</strong></td>
-                        <td>{{ player.games_played }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5" style="text-align:center;padding:2rem;color:#999">
-                            No players yet. <a href="{% url 'player_create' %}" class="btn btn-hero btn-sm">Add one!</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="ranking-table-wrapper-small ranking-table-small">
+            <h2 class="ranking-title-small">KCC Rated Players</h2>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th class="text-center">Rating</th>
+                            <th class="text-center">Peak Rating</th>
+                            <th class="text-center">Games</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr>
+                            <td class="rank-cell-small">{{ forloop.counter }}</td>
+                            <td class="name-cell-small">{{ player.name }}</td>
+                            <td class="rating-cell-small">{{ player.rating }}</td>
+                            <td class="peak-cell-small">{{ player.peak_rating }}</td>
+                            <td class="text-center">{{ player.games_played }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center;padding:2rem;color:#999">
+                                No players yet. <a href="{% url 'player_create' %}" class="btn btn-hero btn-sm">Add one!</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
