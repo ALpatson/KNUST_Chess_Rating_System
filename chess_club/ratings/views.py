@@ -3,6 +3,7 @@ from django.views.generic import ListView, CreateView, View
 from django.urls import reverse_lazy
 from django.http import HttpResponse
 from django.utils import timezone
+from django.contrib.auth import logout
 from .models import Player, Match
 from .forms import PlayerForm, MatchForm
 from .rating_calculator import RatingCalculator
@@ -198,3 +199,13 @@ class PasscodeView(View):
             return redirect(reverse('home'))
         # fall back with an error
         return render(request, self.template_name, {'error': 'Incorrect passcode'})
+
+
+def logout_view(request):
+    """Clear passcode session keys, log out any authenticated user, and redirect to passcode."""
+    # remove the passcode session flags so the user must re-enter the passcode
+    request.session.pop('access_granted', None)
+    request.session.pop('access_granted_at', None)
+    # also log out any django-authenticated user if present
+    logout(request)
+    return redirect(reverse('passcode'))

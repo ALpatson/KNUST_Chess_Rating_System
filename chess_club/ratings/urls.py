@@ -11,4 +11,5 @@ urlpatterns = [
     path('players/ranking/', views.PlayerRankingView.as_view(), name='player_ranking'),
     path('players/ranking/pdf/', views.PlayerRankingPDFView.as_view(), name='player_ranking_pdf'),
     path('passcode/', views.PasscodeView.as_view(), name='passcode'),
+    path('logout/', views.logout_view, name='logout'),
 ]
