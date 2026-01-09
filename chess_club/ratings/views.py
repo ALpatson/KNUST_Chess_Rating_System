@@ -12,6 +12,10 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from django.shortcuts import render
+from django.conf import settings
+from django.shortcuts import redirect
+from django.urls import reverse
 
 
 class PlayerListView(ListView):
@@ -177,3 +181,20 @@ class PlayerRankingPDFView(View):
         # Build PDF
         doc.build(elements)
         return response
+
+class PasscodeView(View):
+    template_name = 'ratings/passcode.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        code = request.POST.get('passcode', '')
+        if code and code == getattr(settings, 'PASSCODE', ''):
+            request.session['access_granted'] = True
+            # store grant time (epoch seconds) so middleware can enforce expiry
+            request.session['access_granted_at'] = timezone.now().timestamp()
+            # redirect to home
+            return redirect(reverse('home'))
+        # fall back with an error
+        return render(request, self.template_name, {'error': 'Incorrect passcode'})
