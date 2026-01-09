@@ -1,0 +1,119 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}{{ tournament.name }} - Standings{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>{{ tournament.name }}</h1>
+        <h5 class="text-muted">Final Standings</h5>
+        <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-secondary">Back to Tournament</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5>Player Rankings</h5>
+            </div>
+            
+            {% if standings %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Score</th>
+                                <th>W-D-L</th>
+                                <th>Initial Rating</th>
+                                <th>Final Rating</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for standing in standings %}
+                            <tr class="{% if forloop.counter == 1 %}table-success{% endif %}">
+                                <td>
+                                    <strong>
+                                        {% if forloop.counter == 1 %}
+                                            🥇 {{ forloop.counter }}
+                                        {% elif forloop.counter == 2 %}
+                                            🥈 {{ forloop.counter }}
+                                        {% elif forloop.counter == 3 %}
+                                            🥉 {{ forloop.counter }}
+                                        {% else %}
+                                            {{ forloop.counter }}
+                                        {% endif %}
+                                    </strong>
+                                </td>
+                                <td>
+                                    <strong>{{ standing.player.name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info" style="font-size: 1rem;">
+                                        {{ standing.total_score }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>
+                                        <span class="text-success">{{ standing.wins }}W</span>
+                                        <span class="text-secondary">{{ standing.draws }}D</span>
+                                        <span class="text-danger">{{ standing.losses }}L</span>
+                                    </small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ standing.initial_rating }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ standing.final_rating }}</strong>
+                                </td>
+                                <td>
+                                    <strong class="{% if standing.rating_change > 0 %}text-success{% elif standing.rating_change < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        {% if standing.rating_change > 0 %}+{% endif %}{{ standing.rating_change }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card-body">
+                    <div class="alert alert-info">No standings available yet. Create rounds first!</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Summary Stats -->
+        {% if standings %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Tournament Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Tournament Type:</strong> {{ tournament.get_tournament_type_display }}</p>
+                        <p><strong>Total Rounds:</strong> {{ tournament.num_rounds }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if tournament.is_finished %}
+                                <span class="badge bg-success">FINISHED</span>
+                            {% else %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Total Players:</strong> {{ tournament.players.count }}</p>
+                        <p><strong>Completed Rounds:</strong> {{ tournament.rounds.all|length }}</p>
+                        <p><strong>Current Round:</strong> {{ tournament.current_round }}/{{ tournament.num_rounds }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

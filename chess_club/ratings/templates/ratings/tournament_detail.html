@@ -1,0 +1,168 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>{{ tournament.name }}</h1>
+        <p class="text-muted">{{ tournament.description }}</p>
+        <div class="mb-3">
+            <span class="badge bg-info">{{ tournament.get_tournament_type_display }}</span>
+            <span class="badge bg-secondary">Round {{ tournament.current_round }}/{{ tournament.num_rounds }}</span>
+            {% if tournament.is_finished %}
+                <span class="badge bg-success">FINISHED</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'tournament_standings' tournament.id %}" class="btn btn-info w-100">View Standings</a>
+        {% if not tournament.is_finished and tournament.current_round < tournament.num_rounds %}
+            <form method="post" action="{% url 'generate_round' tournament.id %}" style="margin-top: 10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success w-100">
+                    {% if tournament.current_round == 0 %}
+                        Generate Round 1
+                    {% else %}
+                        Generate Round {{ tournament.current_round|add:1 }}
+                    {% endif %}
+                </button>
+            </form>
+        {% elif tournament.is_finished %}
+            <div class="alert alert-success mt-3">Tournament is complete!</div>
+        {% else %}
+            <div class="alert alert-warning mt-3">All rounds completed. Tournament finished!</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Current Round/Pairings -->
+{% if rounds %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" role="tablist">
+                {% for round in rounds %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if forloop.last %}active{% endif %}" data-bs-toggle="tab" href="#round{{ round.round_number }}">
+                            Round {{ round.round_number }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <div class="tab-content">
+                {% for round in rounds %}
+                    <div class="tab-pane fade {% if forloop.last %}show active{% endif %}" id="round{{ round.round_number }}">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5>Round {{ round.round_number }} - Pairings</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Board</th>
+                                            <th>White</th>
+                                            <th>Black</th>
+                                            <th>Result</th>
+                                            <th>Rating Change</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pairing in round.pairings.all %}
+                                        <tr>
+                                            <td><strong>{{ pairing.board_number }}</strong></td>
+                                            <td>
+                                                {{ pairing.player_white.name }}
+                                                <small class="text-muted">({{ pairing.white_rating_before }})</small>
+                                            </td>
+                                            <td>
+                                                {{ pairing.player_black.name }}
+                                                <small class="text-muted">({{ pairing.black_rating_before }})</small>
+                                            </td>
+                                            <td>
+                                                {% if pairing.result == 'W' %}
+                                                    <span class="badge bg-success">1-0</span>
+                                                {% elif pairing.result == 'B' %}
+                                                    <span class="badge bg-warning text-dark">0-1</span>
+                                                {% elif pairing.result == 'D' %}
+                                                    <span class="badge bg-secondary">½-½</span>
+                                                {% else %}
+                                                    <span class="badge bg-light text-dark">Pending</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pairing.result != 'P' %}
+                                                    <span class="{% if pairing.white_rating_change > 0 %}text-success fw-bold{% elif pairing.white_rating_change < 0 %}text-danger{% endif %}">
+                                                        {% if pairing.white_rating_change > 0 %}+{% endif %}{{ pairing.white_rating_change }}
+                                                    </span>
+                                                    /
+                                                    <span class="{% if pairing.black_rating_change > 0 %}text-success fw-bold{% elif pairing.black_rating_change < 0 %}text-danger{% endif %}">
+                                                        {% if pairing.black_rating_change > 0 %}+{% endif %}{{ pairing.black_rating_change }}
+                                                    </span>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pairing.result == 'P' %}
+                                                    <a href="{% url 'round_detail' tournament.id pairing.round.id %}?pairing={{ pairing.id }}" class="btn btn-sm btn-primary">Enter Result</a>
+                                                {% else %}
+                                                    <span class="text-muted">Done</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="6" class="text-center text-muted py-4">No pairings yet</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        No rounds yet. Click "Generate Round 1" to start the tournament!
+    </div>
+{% endif %}
+
+<!-- Players in Tournament -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Tournament Players ({{ tournament.players.count }})</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Rating</th>
+                            <th>Peak Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in tournament.players.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ player.name }}</td>
+                            <td><span class="badge bg-info">{{ player.rating }}</span></td>
+                            <td>{{ player.peak_rating }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No players in tournament</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

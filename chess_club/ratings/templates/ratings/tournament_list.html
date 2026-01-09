@@ -1,0 +1,52 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Tournaments{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Tournaments</h1>
+        <a href="{% url 'tournament_create' %}" class="btn btn-primary">+ Create Tournament</a>
+    </div>
+</div>
+
+<div class="row">
+    {% for tournament in tournaments %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ tournament.name }}</h5>
+                <p class="card-text text-muted">{{ tournament.description }}</p>
+                
+                <div class="mb-3">
+                    <span class="badge bg-info">{{ tournament.get_tournament_type_display }}</span>
+                    <span class="badge bg-secondary">Round {{ tournament.current_round }}/{{ tournament.num_rounds }}</span>
+                </div>
+                
+                <p class="card-text"><small>Created: {{ tournament.created_at|date:"M d, Y" }}</small></p>
+                <p class="card-text">
+                    <small>
+                        <strong>Players:</strong> {{ tournament.players.count }}<br>
+                        <strong>Pairings:</strong> {{ tournament.rounds.all|length }} rounds
+                    </small>
+                </p>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-sm btn-primary">View Details</a>
+                <a href="{% url 'tournament_standings' tournament.id %}" class="btn btn-sm btn-info">Standings</a>
+                <form method="post" action="{% url 'delete_tournament' tournament.id %}" style="display: inline;" onsubmit="return confirm('Delete this tournament? This cannot be undone.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            No tournaments yet. <a href="{% url 'tournament_create' %}">Create one now!</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

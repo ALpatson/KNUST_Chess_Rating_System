@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Chess Club Rating System{% endblock %}</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html {
+            background-image: url("{% static 'ratings/chess.jpeg' %}");
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        }
+        body { 
+            background-color: transparent; 
+        }
+        .navbar {
+            background-color: transparent;
+            padding: 1.5rem 0;
+            border: none;
+            position: relative;
+        }
+        .navbar .container-fluid {
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .navbar-nav {
+            background-color: rgba(100,100,100,0.4);
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .nav-link {
+            color: #fff !important;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            margin: 0 0.3rem;
+            font-weight: 500;
+        }
+        .navbar-brand {
+            color: #fff !important;
+            font-weight: 700;
+            font-size: 1.4rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            position: absolute;
+            left: 2rem;
+        }
+        .page-title {
+            text-align: center;
+            color: #fff;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 2rem 0;
+        }
+        @media (max-width:768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            .navbar-brand {
+                position: static;
+                margin-bottom: 1rem;
+            }
+            .navbar .container-fluid {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">KCC Chess</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation" style="border-color:rgba(255,255,255,0.3)">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/players/">Players</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/matches/add/">Calculate Rating</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/players/ranking/">Rankings</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-5">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

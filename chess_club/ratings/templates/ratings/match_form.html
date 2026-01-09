@@ -1,0 +1,76 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Add Match{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5>Calculate Rating - Record Match</h5>
+            </div>
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.player_white.id_for_label }}" class="form-label">White Player</label>
+                        {{ form.player_white }}
+                        {% if form.player_white.errors %}
+                            <div class="alert alert-danger">{{ form.player_white.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.player_black.id_for_label }}" class="form-label">Black Player</label>
+                        {{ form.player_black }}
+                        {% if form.player_black.errors %}
+                            <div class="alert alert-danger">{{ form.player_black.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Result</label>
+                        <div>
+                            {{ form.result }}
+                        </div>
+                        {% if form.result.errors %}
+                            <div class="alert alert-danger">{{ form.result.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Match</button>
+                    <a href="{% url 'player_list' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const white = document.getElementById('{{ form.player_white.id_for_label }}');
+    const black = document.getElementById('{{ form.player_black.id_for_label }}');
+
+    function filterBlack() {
+        if (!white || !black) return;
+        const sel = white.value;
+        for (let i=0;i<black.options.length;i++){
+            const opt = black.options[i];
+            if (opt.value === sel) {
+                opt.disabled = true;
+                opt.hidden = true;
+            } else {
+                opt.disabled = false;
+                opt.hidden = false;
+            }
+        }
+        if (black.value === sel) black.value = '';
+    }
+
+    if (white){
+        white.addEventListener('change', filterBlack);
+        filterBlack();
+    }
+});
+</script>
+{% endblock %}

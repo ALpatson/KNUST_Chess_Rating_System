@@ -1,0 +1,179 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Player Rankings{% endblock %}
+
+{% block content %}
+<style>
+    /* Professional Chess Ranking Table */
+    .ranking-table-wrapper {
+        background-color: rgba(30, 30, 30, 0.95);
+        border-radius: 8px;
+        padding: 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+    
+    .ranking-title {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        color: #ffffff;
+        padding: 1.5rem 2rem;
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border-bottom: 3px solid #b58863;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    .table {
+        margin-bottom: 0;
+        background-color: transparent;
+    }
+    
+    .table thead {
+        background-color: #262421;
+        border-bottom: 2px solid #b58863;
+    }
+    
+    .table thead th {
+        border: none;
+        color: #f0d9b5;
+        font-weight: 700;
+        padding: 1.2rem 1.5rem;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 1.5px;
+    }
+    
+    .table tbody td {
+        padding: 1.3rem 1.5rem;
+        border: none;
+        border-bottom: 1px solid rgba(181, 136, 99, 0.2);
+        vertical-align: middle;
+        font-size: 1.05rem;
+    }
+    
+    .table tbody tr {
+        background-color: rgba(50, 50, 50, 0.6);
+    }
+    
+    .table tbody tr:nth-child(odd) {
+        background-color: rgba(40, 40, 40, 0.7);
+    }
+    
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Column Specific Styles */
+    .rank-cell {
+        font-weight: 800;
+        color: #b58863;
+        font-size: 1.3rem;
+        width: 80px;
+        text-align: center;
+    }
+    
+    .name-cell {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 1.1rem;
+    }
+    
+    .rating-cell {
+        font-weight: 700;
+        color: #4CAF50;
+        font-size: 1.2rem;
+    }
+    
+    .peak-cell {
+        font-weight: 600;
+        color: #FFD700;
+        font-size: 1.05rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #888;
+        font-size: 1.1rem;
+    }
+    
+    .empty-state a {
+        color: #ffffff;
+        background-color: #4CAF50;
+        padding: 0.6rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 1rem;
+    }
+    
+    .empty-state a:hover {
+        background-color: #45a049;
+        text-decoration: none;
+    }
+    
+    @media (max-width: 768px) {
+        .ranking-title {
+            font-size: 1.3rem;
+            padding: 1rem;
+        }
+        .table thead th {
+            padding: 1rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        .table tbody td {
+            padding: 1rem 0.8rem;
+            font-size: 0.95rem;
+        }
+        .rank-cell {
+            font-size: 1.1rem;
+        }
+        .name-cell {
+            font-size: 1rem;
+        }
+        .rating-cell {
+            font-size: 1.05rem;
+        }
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="ranking-table-wrapper">
+            <h1 class="ranking-title">KNUST Rankings</h1>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Current Rating</th>
+                            <th>Peak Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr>
+                            <td class="rank-cell">{{ forloop.counter }}</td>
+                            <td class="name-cell">{{ player.name }}</td>
+                            <td class="rating-cell">{{ player.rating }}</td>
+                            <td class="peak-cell">{{ player.peak_rating }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                No players ranked yet. <a href="{% url 'player_create' %}">Add your first player!</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
