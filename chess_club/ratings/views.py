@@ -83,9 +83,11 @@ class PlayerRankingView(ListView):
     model = Player
     template_name = 'ratings/player_ranking.html'
     context_object_name = 'players'
-    queryset = Player.objects.all().order_by('-rating')
+    
+    def get_queryset(self):
+        return Player.objects.all().order_by('-rating')
 
-
+    
 class PlayerRankingPDFView(View):
     def get(self, request):
         # Get all players ordered by rating
@@ -182,6 +184,7 @@ class PlayerRankingPDFView(View):
         # Build PDF
         doc.build(elements)
         return response
+
 
 class PasscodeView(View):
     template_name = 'ratings/passcode.html'
