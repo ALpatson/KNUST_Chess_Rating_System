@@ -88,16 +88,27 @@
         text-align: center;
     }
 
+    .add-player-btn {
+        font-size: 1.2rem;
+        font-weight: 800;
+        padding: 0.95rem 1.6rem;
+        min-width: 205px;
+    }
+
     @media (max-width: 768px) {
         .ranking-title-small { font-size: 1.1rem; }
         .ranking-table-small .table thead th, .ranking-table-small .table tbody td { padding: 0.7rem 0.6rem; }
+        .add-player-btn {
+            min-width: 85%;
+            max-width: 320px;
+        }
     }
 </style>
 
 <div class="row mb-4">
     <div class="col-12">
         <div style="display:flex;justify-content:center">
-            <a href="{% url 'player_create' %}" class="btn btn-hero" style="font-weight: bold; font-size: 1.1rem;">+ Add Player</a>
+            <a href="{% url 'player_create' %}" class="btn btn-hero add-player-btn">+ Add Player</a>
         </div>
     </div>
 </div>
