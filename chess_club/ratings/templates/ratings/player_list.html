@@ -55,6 +55,15 @@
         color: #222;
     }
 
+    .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .clickable-row:hover {
+        background-color: #faf7f2;
+    }
+
     .rank-cell-small {
         font-weight: 800;
         color: #b58863;
@@ -110,7 +119,7 @@
                     </thead>
                     <tbody>
                         {% for player in players %}
-                        <tr>
+                        <tr class="clickable-row" onclick="window.location='{% url 'player_detail' player.pk %}'">
                             <td class="rank-cell-small">{{ forloop.counter }}</td>
                             <td class="name-cell-small">{{ player.name }}</td>
                             <td class="rating-cell-small">{{ player.rating }}</td>

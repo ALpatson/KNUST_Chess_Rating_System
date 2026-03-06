@@ -1,13 +1,13 @@
 {% extends 'ratings/base.html' %}
 
-{% block title %}Add Player{% endblock %}
+{% block title %}{{ form_title|default:'Add Player' }}{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-6 mx-auto">
         <div class="card">
             <div class="card-header">
-                <h5>Add New Player</h5>
+                <h5>{{ form_title|default:'Add New Player' }}</h5>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -27,7 +27,7 @@
                             <div class="alert alert-danger">{{ form.rating.errors }}</div>
                         {% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Add Player</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ submit_text|default:'Add Player' }}</button>
                     <a href="{% url 'player_list' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
                 </form>
             </div>

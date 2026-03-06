@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, get_object_or_404
-from django.views.generic import ListView, CreateView, View
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, View
 from django.urls import reverse_lazy
 from django.http import HttpResponse
 from django.utils import timezone
@@ -30,6 +30,38 @@ class PlayerCreateView(CreateView):
     form_class = PlayerForm
     template_name = 'ratings/player_form.html'
     success_url = reverse_lazy('player_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = 'Add New Player'
+        context['submit_text'] = 'Add Player'
+        return context
+
+
+class PlayerDetailView(DetailView):
+    model = Player
+    template_name = 'ratings/player_detail.html'
+    context_object_name = 'player'
+
+
+class PlayerUpdateView(UpdateView):
+    model = Player
+    form_class = PlayerForm
+    template_name = 'ratings/player_form.html'
+    success_url = reverse_lazy('player_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = f'Edit {self.object.name}'
+        context['submit_text'] = 'Save Changes'
+        return context
+
+
+class PlayerDeleteView(DeleteView):
+    model = Player
+    template_name = 'ratings/player_confirm_delete.html'
+    success_url = reverse_lazy('player_list')
+    context_object_name = 'player'
 
 
 class MatchCreateView(CreateView):

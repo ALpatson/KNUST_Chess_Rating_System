@@ -1,0 +1,25 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Delete {{ player.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Delete Player</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">Are you sure you want to delete <strong>{{ player.name }}</strong>?</p>
+                <p class="text-muted small mb-4">This will also remove this player's match records.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100">Yes, Delete Player</button>
+                    <a href="{% url 'player_detail' player.pk %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
