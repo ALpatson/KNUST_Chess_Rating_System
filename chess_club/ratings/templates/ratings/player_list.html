@@ -224,9 +224,6 @@
                         <ul id="player-suggestions" class="player-suggestions" hidden></ul>
                     </div>
                     <button type="submit" class="player-search-btn">Search</button>
-                    {% if search_query %}
-                    <a href="{% url 'player_list' %}" class="player-clear-btn">Clear</a>
-                    {% endif %}
                 </form>
             </div>
             <div class="table-responsive">
@@ -272,6 +269,8 @@
         var searchInput = document.getElementById('player-search-input');
         var suggestionList = document.getElementById('player-suggestions');
         var form = searchInput ? searchInput.closest('form') : null;
+        var resetUrl = '{% url "player_list" %}';
+        var hadInitialQuery = '{{ search_query|escapejs }}'.trim().length > 0;
         var debounceTimer;
 
         if (!searchInput || !suggestionList || !form) {
@@ -328,6 +327,9 @@
 
             if (query.length < 1) {
                 hideSuggestions();
+                if (hadInitialQuery) {
+                    window.location.href = resetUrl;
+                }
                 return;
             }
 

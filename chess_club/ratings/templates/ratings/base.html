@@ -160,6 +160,61 @@
             margin-top: 120px;
             margin-bottom: 90px;
         }
+
+        .alert-stack {
+            position: sticky;
+            top: 92px;
+            z-index: 1030;
+            margin-bottom: 1rem;
+        }
+
+        .app-alert {
+            border-width: 2px;
+            border-style: solid;
+            font-weight: 700;
+            font-size: 1.02rem;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        }
+
+        .app-alert.alert-danger {
+            background: #8f1024;
+            border-color: #ff9aa5;
+            color: #fff;
+        }
+
+        .app-alert.alert-warning {
+            background: #fff0c7;
+            border-color: #f0b429;
+            color: #4a3a00;
+        }
+
+        .app-alert.alert-success {
+            background: #0e5f3b;
+            border-color: #83e2b8;
+            color: #fff;
+        }
+
+        .app-alert.alert-info {
+            background: #0f4c81;
+            border-color: #9dd0ff;
+            color: #fff;
+        }
+
+        .app-alert .btn-close {
+            filter: invert(1);
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .alert-stack {
+                top: 80px;
+            }
+
+            .app-alert {
+                font-size: 0.98rem;
+                padding: 0.9rem 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -174,6 +229,7 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/players/">Players</a></li>
                     <li class="nav-item"><a class="nav-link" href="/matches/add/">Calculate Rating</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/matches/history/">Match History</a></li>
                     <li class="nav-item"><a class="nav-link" href="/players/ranking/">Rankings</a></li>
                 </ul>
             </div>
@@ -181,6 +237,16 @@
     </nav>
     
     <div class="container app-container">
+        {% if messages %}
+            <div class="alert-stack">
+                {% for message in messages %}
+                    <div class="alert app-alert {% if 'error' in message.tags %}alert-danger{% elif 'warning' in message.tags %}alert-warning{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </div>
     

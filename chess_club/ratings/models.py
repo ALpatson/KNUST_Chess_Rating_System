@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Player(models.Model):
@@ -36,11 +38,33 @@ class Match(models.Model):
     white_rating_change = models.IntegerField(default=0)
     black_rating_change = models.IntegerField(default=0)
 
+    white_peak_before = models.IntegerField(default=1500)
+    black_peak_before = models.IntegerField(default=1500)
+    white_peak_after = models.IntegerField(default=1500)
+    black_peak_after = models.IntegerField(default=1500)
+
+    white_games_before = models.IntegerField(default=0)
+    black_games_before = models.IntegerField(default=0)
+    white_games_after = models.IntegerField(default=0)
+    black_games_after = models.IntegerField(default=0)
+
+    is_reverted = models.BooleanField(default=False)
+    reverted_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.player_white.name} vs {self.player_black.name} ({self.get_result_display()})"
 
+    @classmethod
+    def cleanup_expired_records(cls):
+        cutoff = timezone.now() - timedelta(days=30)
+        cls.objects.filter(created_at__lt=cutoff).delete()
+
+    @property
+    def is_expired(self):
+        cutoff = timezone.now() - timedelta(days=30)
+        return self.created_at < cutoff
+
     class Meta:
         ordering = ['-created_at']
-    

@@ -1,0 +1,468 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Match History{% endblock %}
+
+{% block content %}
+<style>
+    .history-header h2 {
+        font-size: clamp(1.4rem, 4.6vw, 2rem);
+    }
+
+    .history-header p {
+        font-size: 0.95rem;
+    }
+
+    .history-card .card-body {
+        padding: 1rem;
+    }
+
+    .history-table thead th {
+        white-space: nowrap;
+    }
+
+    .history-pagination {
+        gap: 0.75rem;
+    }
+
+    .history-pagination .btn-group {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .searchable-select {
+        position: relative;
+    }
+
+    .searchable-select-input {
+        width: 100%;
+    }
+
+    .searchable-select-menu {
+        position: absolute;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 50;
+        padding: 0.25rem 0;
+    }
+
+    .searchable-select-menu[hidden] {
+        display: none;
+    }
+
+    .searchable-select-option {
+        padding: 0.55rem 0.75rem;
+        cursor: pointer;
+        color: #222;
+    }
+
+    .searchable-select-option:hover,
+    .searchable-select-option.is-active {
+        background: #f7f7f7;
+    }
+
+    .searchable-select-empty {
+        padding: 0.55rem 0.75rem;
+        color: #777;
+        font-size: 0.9rem;
+    }
+
+    .visually-hidden-select {
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .field-help {
+        color: #666;
+        font-size: 0.85rem;
+        margin-top: 0.35rem;
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 767.98px) {
+        .history-card .card-body {
+            padding: 0.9rem;
+        }
+
+        .history-filters .btn,
+        .history-filters input,
+        .history-filters .searchable-select-input {
+            min-height: 44px;
+        }
+
+        .history-filters .d-flex {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .history-table {
+            border: 0;
+        }
+
+        .history-table thead {
+            display: none;
+        }
+
+        .history-table tbody tr {
+            display: block;
+            margin: 0.75rem;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .history-table tbody td {
+            display: grid;
+            grid-template-columns: 108px 1fr;
+            gap: 0.5rem;
+            align-items: start;
+            border: 0;
+            padding: 0.55rem 0.75rem;
+        }
+
+        .history-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: #495057;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .history-table tbody td:first-child {
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            padding-top: 0.8rem;
+        }
+
+        .history-table tbody td:last-child {
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            padding-bottom: 0.8rem;
+        }
+
+        .history-pagination {
+            align-items: flex-start !important;
+        }
+
+        .history-pagination .btn-group .btn {
+            min-width: 110px;
+        }
+    }
+</style>
+
+<div class="row mb-3 history-header">
+    <div class="col-12">
+        <h2 class="text-white">Match History</h2>
+        <p class="text-light mb-0">Filter by player and date to review recorded and reverted matches.</p>
+    </div>
+</div>
+
+<div class="card mb-4 history-card">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end history-filters" id="history-filter-form">
+            <div class="col-md-4">
+                <label for="player" class="form-label">Player</label>
+                <select name="player" id="player" class="form-select">
+                    <option value="">All players</option>
+                    {% for player in players %}
+                        <option value="{{ player.id }}" {% if selected_player == player.id|stringformat:'s' %}selected{% endif %}>
+                            {{ player.name }} ({{ player.rating }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <p class="field-help">Click the field, type a name, then choose from the dropdown.</p>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">From date</label>
+                <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">To date</label>
+                <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-2 d-grid gap-2">
+                <a href="{% url 'match_history' %}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-info js-date-preset" data-preset="today">Today</button>
+                    <button type="button" class="btn btn-sm btn-outline-info js-date-preset" data-preset="last7">Last 7 days</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card history-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Matches</h5>
+        <span class="text-muted small">Only records within the latest 30 days are retained.</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0 history-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>White</th>
+                    <th>Black</th>
+                    <th>Result</th>
+                    <th>Rating Delta</th>
+                    <th>Status</th>
+                    <th>Reverted At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                    <tr>
+                        <td data-label="Date">{{ match.created_at|date:"M d, Y H:i" }}</td>
+                        <td data-label="White">{{ match.player_white.name }} ({{ match.white_rating_before }} -> {{ match.white_rating_after }})</td>
+                        <td data-label="Black">{{ match.player_black.name }} ({{ match.black_rating_before }} -> {{ match.black_rating_after }})</td>
+                        <td data-label="Result">{{ match.get_result_display }}</td>
+                        <td data-label="Rating Delta">
+                            <span class="{% if match.white_rating_change > 0 %}text-success{% elif match.white_rating_change < 0 %}text-danger{% endif %}">
+                                W: {% if match.white_rating_change > 0 %}+{% endif %}{{ match.white_rating_change }}
+                            </span>
+                            |
+                            <span class="{% if match.black_rating_change > 0 %}text-success{% elif match.black_rating_change < 0 %}text-danger{% endif %}">
+                                B: {% if match.black_rating_change > 0 %}+{% endif %}{{ match.black_rating_change }}
+                            </span>
+                        </td>
+                        <td data-label="Status">
+                            {% if match.is_reverted %}
+                                <span class="badge bg-secondary">Reverted</span>
+                            {% else %}
+                                <span class="badge bg-success">Active</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Reverted At">
+                            {% if match.reverted_at %}
+                                {{ match.reverted_at|date:"M d, Y H:i" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No matches found for the selected filter.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap history-pagination">
+        <div class="text-muted small">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+        <div class="btn-group">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-outline-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}{{ query_string }}">Previous</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a class="btn btn-outline-secondary btn-sm" href="?page={{ page_obj.next_page_number }}{{ query_string }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const filterForm = document.getElementById('history-filter-form');
+    const playerSelect = document.getElementById('player');
+    const dateFromInput = document.getElementById('date_from');
+    const dateToInput = document.getElementById('date_to');
+    const presetButtons = document.querySelectorAll('.js-date-preset');
+    if (!playerSelect || !filterForm) return;
+
+    function submitFilters() {
+        if (typeof filterForm.requestSubmit === 'function') {
+            filterForm.requestSubmit();
+            return;
+        }
+        filterForm.submit();
+    }
+
+    function formatDate(dateObj) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
+    function applyPreset(preset) {
+        if (!dateFromInput || !dateToInput) return;
+
+        const now = new Date();
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let start = new Date(end);
+
+        if (preset === 'today') {
+            start = new Date(end);
+        } else if (preset === 'last7') {
+            start.setDate(start.getDate() - 6);
+        } else {
+            return;
+        }
+
+        dateFromInput.value = formatDate(start);
+        dateToInput.value = formatDate(end);
+        submitFilters();
+    }
+
+    function createSearchableSelect(selectEl, placeholder) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'searchable-select';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control searchable-select-input';
+        input.placeholder = placeholder;
+        input.autocomplete = 'off';
+
+        const menu = document.createElement('div');
+        menu.className = 'searchable-select-menu';
+        menu.hidden = true;
+
+        selectEl.classList.add('visually-hidden-select');
+        selectEl.insertAdjacentElement('afterend', wrapper);
+        wrapper.appendChild(input);
+        wrapper.appendChild(menu);
+
+        let filtered = [];
+        let activeIndex = -1;
+
+        function getSelectedOption() {
+            if (!selectEl.value) return null;
+            return Array.from(selectEl.options).find(function (opt) {
+                return opt.value === selectEl.value;
+            }) || null;
+        }
+
+        function setInputFromSelection() {
+            const selected = getSelectedOption();
+            input.value = selected ? selected.text : '';
+        }
+
+        function getCandidates(query) {
+            const normalized = (query || '').trim().toLowerCase();
+            return Array.from(selectEl.options).filter(function (opt) {
+                if (!normalized) return true;
+                return opt.text.toLowerCase().includes(normalized);
+            });
+        }
+
+        function renderList(query) {
+            filtered = getCandidates(query);
+            activeIndex = filtered.length ? 0 : -1;
+            menu.innerHTML = '';
+
+            if (!filtered.length) {
+                const empty = document.createElement('div');
+                empty.className = 'searchable-select-empty';
+                empty.textContent = 'No matching player';
+                menu.appendChild(empty);
+                menu.hidden = false;
+                return;
+            }
+
+            filtered.forEach(function (opt, index) {
+                const item = document.createElement('div');
+                item.className = 'searchable-select-option' + (index === activeIndex ? ' is-active' : '');
+                item.textContent = opt.text;
+
+                item.addEventListener('mousedown', function (event) {
+                    event.preventDefault();
+                    selectOption(opt);
+                });
+                menu.appendChild(item);
+            });
+
+            menu.hidden = false;
+        }
+
+        function updateActiveItem() {
+            const items = menu.querySelectorAll('.searchable-select-option');
+            items.forEach(function (item, index) {
+                item.classList.toggle('is-active', index === activeIndex);
+            });
+        }
+
+        function selectOption(opt) {
+            selectEl.value = opt.value;
+            setInputFromSelection();
+            menu.hidden = true;
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            submitFilters();
+        }
+
+        input.addEventListener('focus', function () {
+            renderList('');
+            input.select();
+        });
+
+        input.addEventListener('input', function () {
+            renderList(input.value);
+        });
+
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (menu.hidden) {
+                    renderList(input.value);
+                    return;
+                }
+                if (filtered.length) {
+                    activeIndex = Math.min(activeIndex + 1, filtered.length - 1);
+                    updateActiveItem();
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (filtered.length) {
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    updateActiveItem();
+                }
+            } else if (event.key === 'Enter') {
+                if (!menu.hidden && filtered.length && activeIndex >= 0) {
+                    event.preventDefault();
+                    selectOption(filtered[activeIndex]);
+                }
+            } else if (event.key === 'Escape') {
+                menu.hidden = true;
+                setInputFromSelection();
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!wrapper.contains(event.target)) {
+                menu.hidden = true;
+                setInputFromSelection();
+            }
+        });
+
+        setInputFromSelection();
+    }
+
+    presetButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            const preset = button.getAttribute('data-preset');
+            applyPreset(preset);
+        });
+    });
+
+    createSearchableSelect(playerSelect, 'Search player...');
+});
+</script>
+{% endblock %}
