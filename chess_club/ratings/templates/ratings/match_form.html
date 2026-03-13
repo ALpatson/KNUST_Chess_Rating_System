@@ -3,6 +3,76 @@
 {% block title %}Add Match{% endblock %}
 
 {% block content %}
+<style>
+    .searchable-select {
+        position: relative;
+    }
+
+    .searchable-select-input {
+        width: 100%;
+    }
+
+    .searchable-select-menu {
+        position: absolute;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 50;
+        padding: 0.25rem 0;
+    }
+
+    .searchable-select-menu[hidden] {
+        display: none;
+    }
+
+    .searchable-select-option {
+        padding: 0.55rem 0.75rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.65rem;
+        color: #222;
+    }
+
+    .searchable-select-option:hover,
+    .searchable-select-option.is-active {
+        background: #f7f7f7;
+    }
+
+    .searchable-select-rating {
+        color: #666;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .searchable-select-empty {
+        padding: 0.55rem 0.75rem;
+        color: #777;
+        font-size: 0.9rem;
+    }
+
+    .visually-hidden-select {
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .field-help {
+        color: #666;
+        font-size: 0.85rem;
+        margin-top: 0.35rem;
+        margin-bottom: 0;
+    }
+</style>
 <div class="row">
     <div class="col-md-6 mx-auto">
         <div class="card">
@@ -19,6 +89,7 @@
                     <div class="mb-3">
                         <label for="{{ form.player_white.id_for_label }}" class="form-label">White Player</label>
                         {{ form.player_white }}
+                        <p class="field-help">Click the field, type a name, then choose from the dropdown.</p>
                         {% if form.player_white.errors %}
                             <div class="alert alert-danger">{{ form.player_white.errors }}</div>
                         {% endif %}
@@ -26,6 +97,7 @@
                     <div class="mb-3">
                         <label for="{{ form.player_black.id_for_label }}" class="form-label">Black Player</label>
                         {{ form.player_black }}
+                        <p class="field-help">Click the field, type a name, then choose from the dropdown.</p>
                         {% if form.player_black.errors %}
                             <div class="alert alert-danger">{{ form.player_black.errors }}</div>
                         {% endif %}
@@ -51,25 +123,188 @@ document.addEventListener('DOMContentLoaded', function(){
     const white = document.getElementById('{{ form.player_white.id_for_label }}');
     const black = document.getElementById('{{ form.player_black.id_for_label }}');
 
-    function filterBlack() {
-        if (!white || !black) return;
-        const sel = white.value;
-        for (let i=0;i<black.options.length;i++){
-            const opt = black.options[i];
-            if (opt.value === sel) {
-                opt.disabled = true;
-                opt.hidden = true;
-            } else {
-                opt.disabled = false;
-                opt.hidden = false;
-            }
+    function parseLabel(rawText) {
+        const match = rawText.match(/^(.*)\s\((\d+)\)$/);
+        if (!match) {
+            return { name: rawText, rating: '' };
         }
-        if (black.value === sel) black.value = '';
+        return { name: match[1], rating: match[2] };
     }
 
-    if (white){
-        white.addEventListener('change', filterBlack);
-        filterBlack();
+    function createSearchableSelect(selectEl, placeholder, getBlockedValue) {
+        if (!selectEl) return null;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'searchable-select';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control searchable-select-input';
+        input.placeholder = placeholder;
+        input.autocomplete = 'off';
+
+        const menu = document.createElement('div');
+        menu.className = 'searchable-select-menu';
+        menu.hidden = true;
+
+        selectEl.classList.add('visually-hidden-select');
+        selectEl.insertAdjacentElement('afterend', wrapper);
+        wrapper.appendChild(input);
+        wrapper.appendChild(menu);
+
+        let filtered = [];
+        let activeIndex = -1;
+
+        function getSelectedOption() {
+            if (!selectEl.value) return null;
+            return Array.from(selectEl.options).find(function (opt) {
+                return opt.value === selectEl.value;
+            }) || null;
+        }
+
+        function setInputFromSelection() {
+            const selected = getSelectedOption();
+            input.value = selected ? parseLabel(selected.text).name : '';
+        }
+
+        function getCandidates(query) {
+            const blockedValue = getBlockedValue ? getBlockedValue() : '';
+            const normalized = (query || '').trim().toLowerCase();
+
+            return Array.from(selectEl.options)
+                .filter(function (opt) {
+                    return !!opt.value;
+                })
+                .filter(function (opt) {
+                    return !blockedValue || opt.value !== blockedValue;
+                })
+                .filter(function (opt) {
+                    if (!normalized) return true;
+                    return opt.text.toLowerCase().includes(normalized);
+                });
+        }
+
+        function renderList(query) {
+            filtered = getCandidates(query);
+            activeIndex = filtered.length ? 0 : -1;
+            menu.innerHTML = '';
+
+            if (!filtered.length) {
+                const empty = document.createElement('div');
+                empty.className = 'searchable-select-empty';
+                empty.textContent = 'No matching players';
+                menu.appendChild(empty);
+                menu.hidden = false;
+                return;
+            }
+
+            filtered.forEach(function (opt, index) {
+                const item = document.createElement('div');
+                item.className = 'searchable-select-option' + (index === activeIndex ? ' is-active' : '');
+
+                const parsed = parseLabel(opt.text);
+                item.innerHTML = '<span>' + parsed.name + '</span>' +
+                    '<span class="searchable-select-rating">Rating ' + (parsed.rating || '-') + '</span>';
+
+                item.addEventListener('mousedown', function (event) {
+                    event.preventDefault();
+                    selectOption(opt);
+                });
+                menu.appendChild(item);
+            });
+            menu.hidden = false;
+        }
+
+        function updateActiveItem() {
+            const items = menu.querySelectorAll('.searchable-select-option');
+            items.forEach(function (item, index) {
+                item.classList.toggle('is-active', index === activeIndex);
+            });
+        }
+
+        function selectOption(opt) {
+            selectEl.value = opt.value;
+            setInputFromSelection();
+            menu.hidden = true;
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        input.addEventListener('focus', function () {
+            renderList('');
+            input.select();
+        });
+
+        input.addEventListener('input', function () {
+            renderList(input.value);
+        });
+
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (menu.hidden) {
+                    renderList(input.value);
+                    return;
+                }
+                if (filtered.length) {
+                    activeIndex = Math.min(activeIndex + 1, filtered.length - 1);
+                    updateActiveItem();
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (filtered.length) {
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    updateActiveItem();
+                }
+            } else if (event.key === 'Enter') {
+                if (!menu.hidden && filtered.length && activeIndex >= 0) {
+                    event.preventDefault();
+                    selectOption(filtered[activeIndex]);
+                }
+            } else if (event.key === 'Escape') {
+                menu.hidden = true;
+                setInputFromSelection();
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!wrapper.contains(event.target)) {
+                menu.hidden = true;
+                setInputFromSelection();
+            }
+        });
+
+        setInputFromSelection();
+
+        return {
+            refresh: function () {
+                const blockedValue = getBlockedValue ? getBlockedValue() : '';
+                if (blockedValue && selectEl.value === blockedValue) {
+                    selectEl.value = '';
+                }
+                setInputFromSelection();
+                if (!menu.hidden) {
+                    renderList(input.value);
+                }
+            }
+        };
+    }
+
+    if (white && black) {
+        const whiteControl = createSearchableSelect(white, 'Search white player...', function () {
+            return black.value;
+        });
+        const blackControl = createSearchableSelect(black, 'Search black player...', function () {
+            return white.value;
+        });
+
+        function syncPlayers() {
+            if (whiteControl) whiteControl.refresh();
+            if (blackControl) blackControl.refresh();
+        }
+
+        white.addEventListener('change', syncPlayers);
+        black.addEventListener('change', syncPlayers);
+        syncPlayers();
     }
 });
 </script>

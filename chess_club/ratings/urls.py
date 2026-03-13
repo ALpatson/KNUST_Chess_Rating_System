@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.PlayerListView.as_view(), name='home'),
     # Players
     path('players/', views.PlayerListView.as_view(), name='player_list'),
+    path('players/suggestions/', views.PlayerSearchSuggestionsView.as_view(), name='player_search_suggestions'),
     path('players/add/', views.PlayerCreateView.as_view(), name='player_create'),
     path('players/<int:pk>/', views.PlayerDetailView.as_view(), name='player_detail'),
     path('players/<int:pk>/edit/', views.PlayerUpdateView.as_view(), name='player_update'),

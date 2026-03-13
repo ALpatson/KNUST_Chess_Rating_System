@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, get_object_or_404
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, View
 from django.urls import reverse_lazy
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.contrib.auth import logout
 from .models import Player, Match
@@ -23,6 +23,34 @@ class PlayerListView(ListView):
     model = Player
     template_name = 'ratings/player_list.html'
     context_object_name = 'players'
+
+    def get_queryset(self):
+        queryset = Player.objects.all().order_by('-rating', 'name')
+        self.search_query = self.request.GET.get('q', '').strip()
+
+        if self.search_query:
+            queryset = queryset.filter(name__icontains=self.search_query)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = getattr(self, 'search_query', '')
+        return context
+
+
+class PlayerSearchSuggestionsView(View):
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        if not query:
+            return JsonResponse({'results': []})
+
+        suggestions = list(
+            Player.objects.filter(name__icontains=query)
+            .order_by('name')
+            .values('id', 'name', 'rating')[:8]
+        )
+        return JsonResponse({'results': suggestions})
 
 
 class PlayerCreateView(CreateView):
@@ -68,7 +96,7 @@ class MatchCreateView(CreateView):
     model = Match
     form_class = MatchForm
     template_name = 'ratings/match_form.html'
-    success_url = reverse_lazy('player_ranking')
+    success_url = reverse_lazy('match_create')
 
     def form_valid(self, form):
         match = form.save(commit=False)

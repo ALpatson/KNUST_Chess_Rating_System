@@ -95,12 +95,104 @@
         min-width: 205px;
     }
 
+    .player-search-wrap {
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid #ececec;
+        background: #fcfcfc;
+    }
+
+    .player-search-form {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+    }
+
+    .player-search-input-wrap {
+        position: relative;
+        flex: 1;
+    }
+
+    .player-search-input {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .player-search-btn,
+    .player-clear-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 0.58rem 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .player-search-btn {
+        background: #262421;
+        color: #f0d9b5;
+    }
+
+    .player-clear-btn {
+        background: #f1f1f1;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .player-suggestions {
+        position: absolute;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        right: 0;
+        z-index: 20;
+        background: #fff;
+        border: 1px solid #e1e1e1;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        list-style: none;
+        margin: 0;
+        padding: 0.3rem 0;
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .player-suggestions[hidden] {
+        display: none;
+    }
+
+    .player-suggestion-item {
+        padding: 0.55rem 0.8rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.7rem;
+        color: #222;
+    }
+
+    .player-suggestion-item:hover {
+        background: #faf7f2;
+    }
+
+    .player-suggestion-rating {
+        color: #666;
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
     @media (max-width: 768px) {
         .ranking-title-small { font-size: 1.1rem; }
         .ranking-table-small .table thead th, .ranking-table-small .table tbody td { padding: 0.7rem 0.6rem; }
         .add-player-btn {
             min-width: 85%;
             max-width: 320px;
+        }
+        .player-search-form {
+            flex-wrap: wrap;
+        }
+        .player-search-input {
+            width: 100%;
         }
     }
 </style>
@@ -117,6 +209,26 @@
     <div class="col-lg-10 mx-auto">
         <div class="ranking-table-wrapper-small ranking-table-small">
             <h2 class="ranking-title-small">KCC Rated Players</h2>
+            <div class="player-search-wrap">
+                <form method="get" class="player-search-form">
+                    <div class="player-search-input-wrap">
+                        <input
+                            type="text"
+                            name="q"
+                            id="player-search-input"
+                            class="player-search-input"
+                            placeholder="Search player name..."
+                            value="{{ search_query }}"
+                            autocomplete="off"
+                        >
+                        <ul id="player-suggestions" class="player-suggestions" hidden></ul>
+                    </div>
+                    <button type="submit" class="player-search-btn">Search</button>
+                    {% if search_query %}
+                    <a href="{% url 'player_list' %}" class="player-clear-btn">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
             <div class="table-responsive">
                 <table class="table mb-0">
                     <thead>
@@ -140,7 +252,11 @@
                         {% empty %}
                         <tr>
                             <td colspan="5" style="text-align:center;padding:2rem;color:#999">
+                                {% if search_query %}
+                                No players found for "{{ search_query }}".
+                                {% else %}
                                 No players yet. <a href="{% url 'player_create' %}" class="btn btn-hero btn-sm">Add one!</a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -150,4 +266,86 @@
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        var searchInput = document.getElementById('player-search-input');
+        var suggestionList = document.getElementById('player-suggestions');
+        var form = searchInput ? searchInput.closest('form') : null;
+        var debounceTimer;
+
+        if (!searchInput || !suggestionList || !form) {
+            return;
+        }
+
+        function hideSuggestions() {
+            suggestionList.hidden = true;
+            suggestionList.innerHTML = '';
+        }
+
+        function renderSuggestions(items) {
+            if (!items.length) {
+                hideSuggestions();
+                return;
+            }
+
+            suggestionList.innerHTML = '';
+            items.forEach(function (item) {
+                var li = document.createElement('li');
+                li.className = 'player-suggestion-item';
+                li.innerHTML = '<span>' + item.name + '</span><span class="player-suggestion-rating">Rating ' + item.rating + '</span>';
+                li.addEventListener('mousedown', function (event) {
+                    event.preventDefault();
+                    searchInput.value = item.name;
+                    hideSuggestions();
+                    form.submit();
+                });
+                suggestionList.appendChild(li);
+            });
+            suggestionList.hidden = false;
+        }
+
+        function fetchSuggestions(query) {
+            var endpoint = '{% url "player_search_suggestions" %}?q=' + encodeURIComponent(query);
+            fetch(endpoint)
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch suggestions');
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    renderSuggestions(data.results || []);
+                })
+                .catch(function () {
+                    hideSuggestions();
+                });
+        }
+
+        searchInput.addEventListener('input', function () {
+            var query = searchInput.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (query.length < 1) {
+                hideSuggestions();
+                return;
+            }
+
+            debounceTimer = setTimeout(function () {
+                fetchSuggestions(query);
+            }, 180);
+        });
+
+        searchInput.addEventListener('blur', function () {
+            setTimeout(hideSuggestions, 120);
+        });
+
+        searchInput.addEventListener('focus', function () {
+            var query = searchInput.value.trim();
+            if (query.length > 0) {
+                fetchSuggestions(query);
+            }
+        });
+    })();
+</script>
 {% endblock %}
