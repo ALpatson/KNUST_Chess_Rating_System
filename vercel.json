@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "regions": ["dub1"],
   "functions": {
     "api/index.py": {
