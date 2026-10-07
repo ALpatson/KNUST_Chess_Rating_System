@@ -17,7 +17,6 @@ class PasscodeMiddleware:
         # allowed paths that don't require passcode
         self.allowed_prefixes = [
             settings.STATIC_URL,
-            '/admin/',
             '/passcode/',
             '/favicon.ico',
         ]
@@ -51,10 +50,6 @@ class PasscodeMiddleware:
         for p in self.allowed_prefixes:
             if path.startswith(p):
                 return self.get_response(request)
-
-        # allow AJAX to pass through (optional)
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return self.get_response(request)
 
         # otherwise redirect to passcode entry
         return redirect(reverse('passcode'))

@@ -54,36 +54,34 @@ Implementation details
  - Middleware: `ratings.middleware.PasscodeMiddleware` enforces access.
  - View: `ratings.views.PasscodeView` renders `ratings/passcode.html` and
 	 verifies submitted passcode.
- - Settings: The passcode is read from the `PASSCODE` setting in
-	 `chess_club/settings.py` (default shown below). After successful entry the
+ - Settings: The passcode is read from the `PASSCODE` environment variable
+	 (see below). After successful entry the
 	 session keys `access_granted` and `access_granted_at` are stored.
  - Expiry: The middleware checks `access_granted_at` and requires reentry
 	 after 60 minutes. To change the timeout update the check in
 	 `ratings/middleware.py`.
 
-Default passcode
- - The codebase sets a default passcode in `chess_club/settings.py`:
+Passcode
+ - The passcode is read from the `PASSCODE` environment variable. When running
+   locally with `DEBUG` on and no `PASSCODE` set, it falls back to
+   `local-dev-passcode`.
 
-```python
-PASSCODE = 'KNUSTchess@knustplayer'
-```
+Deployment (Vercel + Supabase)
+------------------------------
+`vercel.json` routes every request to `api/index.py`, which serves the Django
+app. Static files are served by WhiteNoise. Set these environment variables in
+Vercel:
 
-For security put a new passcode in an environment variable and update
-`settings.py` to read from the env. Example:
+| Variable | Value |
+| --- | --- |
+| `DEBUG` | `False` |
+| `SECRET_KEY` | a long random string |
+| `PASSCODE` | the club passcode |
+| `DATABASE_URL` | Supabase "Transaction pooler" connection string (port 6543) |
+| `ALLOWED_HOSTS` | optional, comma-separated custom domains (`*.vercel.app` is always allowed) |
 
-```python
-import os
-PASSCODE = os.environ.get('KNUST_PASSCODE', 'KNUSTchess@knustplayer')
-```
-
-Then export before starting the server:
-
-```bash
-# Windows (PowerShell)
-$env:KNUST_PASSCODE = 'MySecret'
-# macOS / Linux
-export KNUST_PASSCODE='MySecret'
-```
+Run migrations against Supabase from your machine with `DATABASE_URL` set:
+`python manage.py migrate`.
 
 PDF export
 ----------

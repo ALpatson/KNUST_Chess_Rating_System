@@ -1,4 +1,7 @@
+import hmac
+
 from django.shortcuts import redirect, get_object_or_404
+from django.utils.dateparse import parse_date
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, View
 from django.urls import reverse_lazy
 from django.http import HttpResponse, JsonResponse
@@ -23,6 +26,13 @@ from django.shortcuts import redirect
 from django.urls import reverse
 
 
+def parse_date_safe(value):
+    try:
+        return parse_date(value) if value else None
+    except ValueError:
+        return None
+
+
 class PlayerListView(ListView):
     model = Player
     template_name = 'ratings/player_list.html'
@@ -40,6 +50,11 @@ class PlayerListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = getattr(self, 'search_query', '')
+        # Overall rank, so a filtered search still shows each player's true position.
+        ordered_ids = Player.objects.order_by('-rating', 'name').values_list('pk', flat=True)
+        rank_by_id = {pk: idx for idx, pk in enumerate(ordered_ids, 1)}
+        for player in context['players']:
+            player.rank = rank_by_id.get(player.pk)
         return context
 
 
@@ -63,6 +78,10 @@ class PlayerCreateView(CreateView):
     template_name = 'ratings/player_form.html'
     success_url = reverse_lazy('player_list')
 
+    def form_valid(self, form):
+        form.instance.peak_rating = form.instance.rating
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form_title'] = 'Add New Player'
@@ -81,6 +100,11 @@ class PlayerUpdateView(UpdateView):
     form_class = PlayerForm
     template_name = 'ratings/player_form.html'
     success_url = reverse_lazy('player_list')
+
+    def form_valid(self, form):
+        if form.instance.rating > form.instance.peak_rating:
+            form.instance.peak_rating = form.instance.rating
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -101,10 +125,6 @@ class MatchCreateView(CreateView):
     form_class = MatchForm
     template_name = 'ratings/match_form.html'
     success_url = reverse_lazy('match_create')
-
-    def dispatch(self, request, *args, **kwargs):
-        Match.cleanup_expired_records()
-        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -176,7 +196,6 @@ class MatchCreateView(CreateView):
 
 class MatchRevertView(View):
     def post(self, request, pk):
-        Match.cleanup_expired_records()
         history_player_query = request.POST.get('history_player', '').strip()
 
         with transaction.atomic():
@@ -253,16 +272,20 @@ class MatchHistoryView(ListView):
     context_object_name = 'matches'
     paginate_by = 25
 
-    def dispatch(self, request, *args, **kwargs):
-        Match.cleanup_expired_records()
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
         queryset = Match.objects.select_related('player_white', 'player_black')
 
         self.player_id = self.request.GET.get('player', '').strip()
         self.date_from = self.request.GET.get('date_from', '').strip()
         self.date_to = self.request.GET.get('date_to', '').strip()
+
+        # Ignore malformed filters instead of crashing with a server error.
+        if not self.player_id.isdigit():
+            self.player_id = ''
+        if not parse_date_safe(self.date_from):
+            self.date_from = ''
+        if not parse_date_safe(self.date_to):
+            self.date_to = ''
 
         if self.player_id:
             queryset = queryset.filter(
@@ -408,7 +431,8 @@ class PasscodeView(View):
 
     def post(self, request):
         code = request.POST.get('passcode', '')
-        if code and code == getattr(settings, 'PASSCODE', ''):
+        expected = getattr(settings, 'PASSCODE', '')
+        if code and expected and hmac.compare_digest(code.encode(), expected.encode()):
             request.session['access_granted'] = True
             # store grant time (epoch seconds) so middleware can enforce expiry
             request.session['access_granted_at'] = timezone.now().timestamp()

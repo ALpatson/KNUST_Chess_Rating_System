@@ -123,7 +123,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Match History (30-day window)</h5>
+                <h5 class="mb-0">Recent Matches</h5>
                 <small class="text-muted">Search by player or see newest</small>
             </div>
             <div class="card-body border-bottom">
@@ -206,7 +206,7 @@
                 </table>
             </div>
             <div class="card-footer text-muted small">
-                Revert must be done from newest match backward for affected players to keep ratings accurate.
+                Matches can be reverted within 30 days. Revert from the newest match backward for affected players to keep ratings accurate.
             </div>
         </div>
     </div>
@@ -296,8 +296,13 @@ document.addEventListener('DOMContentLoaded', function(){
                 item.className = 'searchable-select-option' + (index === activeIndex ? ' is-active' : '');
 
                 const parsed = parseLabel(opt.text);
-                item.innerHTML = '<span>' + parsed.name + '</span>' +
-                    '<span class="searchable-select-rating">Rating ' + (parsed.rating || '-') + '</span>';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = parsed.name;
+                const ratingSpan = document.createElement('span');
+                ratingSpan.className = 'searchable-select-rating';
+                ratingSpan.textContent = 'Rating ' + (parsed.rating || '-');
+                item.appendChild(nameSpan);
+                item.appendChild(ratingSpan);
 
                 item.addEventListener('mousedown', function (event) {
                     event.preventDefault();

@@ -56,13 +56,9 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.player_white.name} vs {self.player_black.name} ({self.get_result_display()})"
 
-    @classmethod
-    def cleanup_expired_records(cls):
-        cutoff = timezone.now() - timedelta(days=30)
-        cls.objects.filter(created_at__lt=cutoff).delete()
-
     @property
     def is_expired(self):
+        """Matches older than 30 days are kept but can no longer be reverted."""
         cutoff = timezone.now() - timedelta(days=30)
         return self.created_at < cutoff
 

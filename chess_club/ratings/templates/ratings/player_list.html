@@ -240,7 +240,7 @@
                     <tbody>
                         {% for player in players %}
                         <tr class="clickable-row" onclick="window.location='{% url 'player_detail' player.pk %}'">
-                            <td class="rank-cell-small">{{ forloop.counter }}</td>
+                            <td class="rank-cell-small">{{ player.rank }}</td>
                             <td class="name-cell-small">{{ player.name }}</td>
                             <td class="rating-cell-small">{{ player.rating }}</td>
                             <td class="peak-cell-small">{{ player.peak_rating }}</td>
@@ -292,7 +292,13 @@
             items.forEach(function (item) {
                 var li = document.createElement('li');
                 li.className = 'player-suggestion-item';
-                li.innerHTML = '<span>' + item.name + '</span><span class="player-suggestion-rating">Rating ' + item.rating + '</span>';
+                var nameSpan = document.createElement('span');
+                nameSpan.textContent = item.name;
+                var ratingSpan = document.createElement('span');
+                ratingSpan.className = 'player-suggestion-rating';
+                ratingSpan.textContent = 'Rating ' + item.rating;
+                li.appendChild(nameSpan);
+                li.appendChild(ratingSpan);
                 li.addEventListener('mousedown', function (event) {
                     event.preventDefault();
                     searchInput.value = item.name;

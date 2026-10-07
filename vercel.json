@@ -1,0 +1,12 @@
+{
+  "regions": ["dub1"],
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "chess_club/**",
+      "excludeFiles": "chess_club/{db.sqlite3,**/__pycache__/**}"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ]
+}
