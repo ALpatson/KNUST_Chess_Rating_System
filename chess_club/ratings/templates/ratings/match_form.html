@@ -1,409 +1,78 @@
 {% extends 'ratings/base.html' %}
 
-{% block title %}Add Match{% endblock %}
+{% block title %}Record Match{% endblock %}
 
 {% block content %}
-<style>
-    .searchable-select {
-        position: relative;
-    }
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Rated game</span>
+        <h1>Record a Match</h1>
+        <p class="lead-text">Pick both players and the result. Ratings update straight away.</p>
+    </div>
+</div>
 
-    .searchable-select-input {
-        width: 100%;
-    }
-
-    .searchable-select-menu {
-        position: absolute;
-        top: calc(100% + 0.25rem);
-        left: 0;
-        right: 0;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        max-height: 240px;
-        overflow-y: auto;
-        z-index: 50;
-        padding: 0.25rem 0;
-    }
-
-    .searchable-select-menu[hidden] {
-        display: none;
-    }
-
-    .searchable-select-option {
-        padding: 0.55rem 0.75rem;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        gap: 0.65rem;
-        color: #222;
-    }
-
-    .searchable-select-option:hover,
-    .searchable-select-option.is-active {
-        background: #f7f7f7;
-    }
-
-    .searchable-select-rating {
-        color: #666;
-        font-size: 0.85rem;
-        white-space: nowrap;
-    }
-
-    .searchable-select-empty {
-        padding: 0.55rem 0.75rem;
-        color: #777;
-        font-size: 0.9rem;
-    }
-
-    .visually-hidden-select {
-        position: absolute;
-        left: -9999px;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .field-help {
-        color: #666;
-        font-size: 0.85rem;
-        margin-top: 0.35rem;
-        margin-bottom: 0;
-    }
-</style>
-<div class="row">
-    <div class="col-md-6 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5>Calculate Rating - Record Match</h5>
-            </div>
-            <div class="card-body">
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-                {% endif %}
-                
-                <form method="post">
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="panel">
+            <div class="panel-head"><h2>New result</h2></div>
+            <div class="panel-body">
+                {% if form.non_field_errors %}<div class="field-error mb-3">{{ form.non_field_errors }}</div>{% endif %}
+                <form method="post" novalidate>
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="{{ form.player_white.id_for_label }}" class="form-label">White Player</label>
+                        <label for="{{ form.player_white.id_for_label }}" class="form-label"><span class="color-dot white"></span>White</label>
                         {{ form.player_white }}
-                        <p class="field-help">Click the field, type a name, then choose from the dropdown.</p>
-                        {% if form.player_white.errors %}
-                            <div class="alert alert-danger">{{ form.player_white.errors }}</div>
-                        {% endif %}
+                        {% if form.player_white.errors %}<div class="field-error">{{ form.player_white.errors }}</div>{% endif %}
                     </div>
                     <div class="mb-3">
-                        <label for="{{ form.player_black.id_for_label }}" class="form-label">Black Player</label>
+                        <label for="{{ form.player_black.id_for_label }}" class="form-label"><span class="color-dot black"></span>Black</label>
                         {{ form.player_black }}
-                        <p class="field-help">Click the field, type a name, then choose from the dropdown.</p>
-                        {% if form.player_black.errors %}
-                            <div class="alert alert-danger">{{ form.player_black.errors }}</div>
-                        {% endif %}
+                        {% if form.player_black.errors %}<div class="field-error">{{ form.player_black.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Result</label>
-                        <div>
-                            {{ form.result }}
-                        </div>
-                        {% if form.result.errors %}
-                            <div class="alert alert-danger">{{ form.result.errors }}</div>
-                        {% endif %}
+                    <div class="mb-4">
+                        <span class="form-label d-block mb-2">Result</span>
+                        <div class="result-picker">{{ form.result }}</div>
+                        {% if form.result.errors %}<div class="field-error">{{ form.result.errors }}</div>{% endif %}
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Save Match</button>
-                    <a href="{% url 'player_list' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                    <button type="submit" class="btn btn-gold btn-lg w-100">Save Match</button>
                 </form>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Matches</h5>
-                <small class="text-muted">Search by player or see newest</small>
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="panel-head">
+                <h2>{% if history_player_query %}Games for "{{ history_player_query }}"{% else %}Latest matches{% endif %}</h2>
+                <a href="{% url 'match_history' %}" class="btn btn-sm btn-outline-secondary">Full history</a>
             </div>
-            <div class="card-body border-bottom">
-                <form method="get" class="row g-2 align-items-end">
-                    <div class="col-md-8">
-                        <label for="history-player-search" class="form-label mb-1">Search Player Games</label>
-                        <input
-                            id="history-player-search"
-                            type="text"
-                            name="history_player"
-                            value="{{ history_player_query }}"
-                            class="form-control"
-                            placeholder="Type player name (e.g. Kwame)"
-                        >
-                    </div>
-                    <div class="col-md-4 d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="submit" class="btn btn-primary">Search</button>
-                        {% if history_player_query %}
-                            <a href="{% url 'match_create' %}" class="btn btn-outline-secondary">Show Newest</a>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>White</th>
-                            <th>Black</th>
-                            <th>Result</th>
-                            <th>Rating Change</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for match in recent_matches %}
-                            <tr>
-                                <td>{{ match.created_at|date:"M d, Y H:i" }}</td>
-                                <td>{{ match.player_white.name }} ({{ match.white_rating_before }} -> {{ match.white_rating_after }})</td>
-                                <td>{{ match.player_black.name }} ({{ match.black_rating_before }} -> {{ match.black_rating_after }})</td>
-                                <td>{{ match.get_result_display }}</td>
-                                <td>
-                                    <span class="{% if match.white_rating_change > 0 %}text-success{% elif match.white_rating_change < 0 %}text-danger{% endif %}">
-                                        W: {% if match.white_rating_change > 0 %}+{% endif %}{{ match.white_rating_change }}
-                                    </span>
-                                    |
-                                    <span class="{% if match.black_rating_change > 0 %}text-success{% elif match.black_rating_change < 0 %}text-danger{% endif %}">
-                                        B: {% if match.black_rating_change > 0 %}+{% endif %}{{ match.black_rating_change }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if match.is_reverted %}
-                                        <span class="badge bg-secondary">Reverted</span>
-                                    {% else %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if not match.is_reverted and not match.is_expired %}
-                                        <form method="post" action="{% url 'match_revert' match.pk %}" onsubmit="return confirm('Revert this match and restore both players\' previous stats?');">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="history_player" value="{{ history_player_query }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Revert</button>
-                                        </form>
-                                    {% elif match.is_expired %}
-                                        <span class="text-muted">Expired</span>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No recent matches found.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer text-muted small">
-                Matches can be reverted within 30 days. Revert from the newest match backward for affected players to keep ratings accurate.
+            <form method="get" class="search-row">
+                <input type="search" name="history_player" value="{{ history_player_query }}" class="form-control" placeholder="Find a player's games..." aria-label="Find a player's games">
+                <button type="submit" class="btn btn-ink">Search</button>
+                {% if history_player_query %}<a href="{% url 'match_create' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+            </form>
+            {% include 'ratings/_match_rows.html' with matches=recent_matches show_revert=True %}
+            <div class="panel-foot">
+                Matches can be reverted within 30 days. Revert from the newest match backward so ratings stay accurate.
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-    const white = document.getElementById('{{ form.player_white.id_for_label }}');
-    const black = document.getElementById('{{ form.player_black.id_for_label }}');
+document.addEventListener('DOMContentLoaded', function () {
+    var white = document.getElementById('{{ form.player_white.id_for_label }}');
+    var black = document.getElementById('{{ form.player_black.id_for_label }}');
+    if (!white || !black) return;
 
-    function parseLabel(rawText) {
-        const match = rawText.match(/^(.*)\s\((\d+)\)$/);
-        if (!match) {
-            return { name: rawText, rating: '' };
-        }
-        return { name: match[1], rating: match[2] };
-    }
+    var whiteCtl = KCC.searchableSelect(white, { placeholder: 'Search white player...', blockedValue: function () { return black.value; } });
+    var blackCtl = KCC.searchableSelect(black, { placeholder: 'Search black player...', blockedValue: function () { return white.value; } });
 
-    function createSearchableSelect(selectEl, placeholder, getBlockedValue) {
-        if (!selectEl) return null;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'searchable-select';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'form-control searchable-select-input';
-        input.placeholder = placeholder;
-        input.autocomplete = 'off';
-
-        const menu = document.createElement('div');
-        menu.className = 'searchable-select-menu';
-        menu.hidden = true;
-
-        selectEl.classList.add('visually-hidden-select');
-        selectEl.insertAdjacentElement('afterend', wrapper);
-        wrapper.appendChild(input);
-        wrapper.appendChild(menu);
-
-        let filtered = [];
-        let activeIndex = -1;
-
-        function getSelectedOption() {
-            if (!selectEl.value) return null;
-            return Array.from(selectEl.options).find(function (opt) {
-                return opt.value === selectEl.value;
-            }) || null;
-        }
-
-        function setInputFromSelection() {
-            const selected = getSelectedOption();
-            input.value = selected ? parseLabel(selected.text).name : '';
-        }
-
-        function getCandidates(query) {
-            const blockedValue = getBlockedValue ? getBlockedValue() : '';
-            const normalized = (query || '').trim().toLowerCase();
-
-            return Array.from(selectEl.options)
-                .filter(function (opt) {
-                    return !!opt.value;
-                })
-                .filter(function (opt) {
-                    return !blockedValue || opt.value !== blockedValue;
-                })
-                .filter(function (opt) {
-                    if (!normalized) return true;
-                    return opt.text.toLowerCase().includes(normalized);
-                });
-        }
-
-        function renderList(query) {
-            filtered = getCandidates(query);
-            activeIndex = filtered.length ? 0 : -1;
-            menu.innerHTML = '';
-
-            if (!filtered.length) {
-                const empty = document.createElement('div');
-                empty.className = 'searchable-select-empty';
-                empty.textContent = 'No matching players';
-                menu.appendChild(empty);
-                menu.hidden = false;
-                return;
-            }
-
-            filtered.forEach(function (opt, index) {
-                const item = document.createElement('div');
-                item.className = 'searchable-select-option' + (index === activeIndex ? ' is-active' : '');
-
-                const parsed = parseLabel(opt.text);
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = parsed.name;
-                const ratingSpan = document.createElement('span');
-                ratingSpan.className = 'searchable-select-rating';
-                ratingSpan.textContent = 'Rating ' + (parsed.rating || '-');
-                item.appendChild(nameSpan);
-                item.appendChild(ratingSpan);
-
-                item.addEventListener('mousedown', function (event) {
-                    event.preventDefault();
-                    selectOption(opt);
-                });
-                menu.appendChild(item);
-            });
-            menu.hidden = false;
-        }
-
-        function updateActiveItem() {
-            const items = menu.querySelectorAll('.searchable-select-option');
-            items.forEach(function (item, index) {
-                item.classList.toggle('is-active', index === activeIndex);
-            });
-        }
-
-        function selectOption(opt) {
-            selectEl.value = opt.value;
-            setInputFromSelection();
-            menu.hidden = true;
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-
-        input.addEventListener('focus', function () {
-            renderList('');
-            input.select();
-        });
-
-        input.addEventListener('input', function () {
-            renderList(input.value);
-        });
-
-        input.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (menu.hidden) {
-                    renderList(input.value);
-                    return;
-                }
-                if (filtered.length) {
-                    activeIndex = Math.min(activeIndex + 1, filtered.length - 1);
-                    updateActiveItem();
-                }
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (filtered.length) {
-                    activeIndex = Math.max(activeIndex - 1, 0);
-                    updateActiveItem();
-                }
-            } else if (event.key === 'Enter') {
-                if (!menu.hidden && filtered.length && activeIndex >= 0) {
-                    event.preventDefault();
-                    selectOption(filtered[activeIndex]);
-                }
-            } else if (event.key === 'Escape') {
-                menu.hidden = true;
-                setInputFromSelection();
-            }
-        });
-
-        document.addEventListener('click', function (event) {
-            if (!wrapper.contains(event.target)) {
-                menu.hidden = true;
-                setInputFromSelection();
-            }
-        });
-
-        setInputFromSelection();
-
-        return {
-            refresh: function () {
-                const blockedValue = getBlockedValue ? getBlockedValue() : '';
-                if (blockedValue && selectEl.value === blockedValue) {
-                    selectEl.value = '';
-                }
-                setInputFromSelection();
-                if (!menu.hidden) {
-                    renderList(input.value);
-                }
-            }
-        };
-    }
-
-    if (white && black) {
-        const whiteControl = createSearchableSelect(white, 'Search white player...', function () {
-            return black.value;
-        });
-        const blackControl = createSearchableSelect(black, 'Search black player...', function () {
-            return white.value;
-        });
-
-        function syncPlayers() {
-            if (whiteControl) whiteControl.refresh();
-            if (blackControl) blackControl.refresh();
-        }
-
-        white.addEventListener('change', syncPlayers);
-        black.addEventListener('change', syncPlayers);
-        syncPlayers();
-    }
+    function sync() { whiteCtl.refresh(); blackCtl.refresh(); }
+    white.addEventListener('change', sync);
+    black.addEventListener('change', sync);
 });
 </script>
 {% endblock %}

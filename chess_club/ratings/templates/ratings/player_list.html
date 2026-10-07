@@ -1,359 +1,76 @@
 {% extends 'ratings/base.html' %}
 
-{% block title %}Players{% endblock %}
+{% block title %}Rankings{% endblock %}
 
 {% block content %}
-<style>
-    /* Reuse ranking-style table look for players list */
-    .ranking-table-wrapper-small {
-        background-color: #fff;
-        border-radius: 12px;
-        padding: 0;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        overflow: hidden;
-    }
-
-    .ranking-title-small {
-        background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
-        color: #111;
-        padding: 1.2rem 1.6rem;
-        margin: 0;
-        font-size: 1.4rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        border-bottom: 1px solid #e6e6e6;
-    }
-
-    .ranking-table-small .table {
-        margin-bottom: 0;
-        background-color: transparent;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .ranking-table-small .table thead {
-        background-color: #f7f7f7;
-        border-bottom: 1px solid #e6e6e6;
-    }
-
-    .ranking-table-small .table thead th {
-        border: none;
-        color: #333;
-        font-weight: 700;
-        padding: 0.9rem 1rem;
-        text-transform: none;
-        font-size: 0.95rem;
-        letter-spacing: 0.5px;
-    }
-
-    .ranking-table-small .table tbody td {
-        padding: 0.95rem 1rem;
-        border: none;
-        border-bottom: 1px solid #f0f0f0;
-        vertical-align: middle;
-        font-size: 0.98rem;
-        color: #222;
-    }
-
-    .clickable-row {
-        cursor: pointer;
-        transition: background-color 0.15s ease;
-    }
-
-    .clickable-row:hover {
-        background-color: #faf7f2;
-    }
-
-    .rank-cell-small {
-        font-weight: 800;
-        color: #b58863;
-        text-align: center;
-        width: 60px;
-    }
-
-    .name-cell-small {
-        font-weight: 600;
-        color: #111;
-    }
-
-    .rating-cell-small {
-        font-weight: 700;
-        color: #111;
-        text-align: center;
-    }
-
-    .peak-cell-small {
-        font-style: italic;
-        color: #666;
-        text-align: center;
-    }
-
-    .add-player-btn {
-        font-size: 1.2rem;
-        font-weight: 800;
-        padding: 0.95rem 1.6rem;
-        min-width: 205px;
-    }
-
-    .player-search-wrap {
-        padding: 0.9rem 1rem;
-        border-bottom: 1px solid #ececec;
-        background: #fcfcfc;
-    }
-
-    .player-search-form {
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-    }
-
-    .player-search-input-wrap {
-        position: relative;
-        flex: 1;
-    }
-
-    .player-search-input {
-        flex: 1;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 0.6rem 0.8rem;
-        font-size: 0.95rem;
-    }
-
-    .player-search-btn,
-    .player-clear-btn {
-        border: none;
-        border-radius: 8px;
-        padding: 0.58rem 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-
-    .player-search-btn {
-        background: #262421;
-        color: #f0d9b5;
-    }
-
-    .player-clear-btn {
-        background: #f1f1f1;
-        color: #333;
-        text-decoration: none;
-    }
-
-    .player-suggestions {
-        position: absolute;
-        top: calc(100% + 0.25rem);
-        left: 0;
-        right: 0;
-        z-index: 20;
-        background: #fff;
-        border: 1px solid #e1e1e1;
-        border-radius: 10px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        list-style: none;
-        margin: 0;
-        padding: 0.3rem 0;
-        max-height: 260px;
-        overflow-y: auto;
-    }
-
-    .player-suggestions[hidden] {
-        display: none;
-    }
-
-    .player-suggestion-item {
-        padding: 0.55rem 0.8rem;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        gap: 0.7rem;
-        color: #222;
-    }
-
-    .player-suggestion-item:hover {
-        background: #faf7f2;
-    }
-
-    .player-suggestion-rating {
-        color: #666;
-        font-size: 0.88rem;
-        white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-        .ranking-title-small { font-size: 1.1rem; }
-        .ranking-table-small .table thead th, .ranking-table-small .table tbody td { padding: 0.7rem 0.6rem; }
-        .add-player-btn {
-            min-width: 85%;
-            max-width: 320px;
-        }
-        .player-search-form {
-            flex-wrap: wrap;
-        }
-        .player-search-input {
-            width: 100%;
-        }
-    }
-</style>
-
-<div class="row mb-4">
-    <div class="col-12">
-        <div style="display:flex;justify-content:center">
-            <a href="{% url 'player_create' %}" class="btn btn-hero add-player-btn">+ Add Player</a>
-        </div>
+<div class="page-head">
+    <div>
+        <span class="eyebrow">KNUST Chess Club</span>
+        <h1>Club Rankings</h1>
+        <p class="lead-text">{{ total_players }} rated player{{ total_players|pluralize }}. Tap a player to see their profile.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'player_ranking_pdf' %}" class="btn btn-glass">Download PDF</a>
+        <a href="{% url 'player_create' %}" class="btn btn-gold">+ Add Player</a>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-10 mx-auto">
-        <div class="ranking-table-wrapper-small ranking-table-small">
-            <h2 class="ranking-title-small">KCC Rated Players</h2>
-            <div class="player-search-wrap">
-                <form method="get" class="player-search-form">
-                    <div class="player-search-input-wrap">
-                        <input
-                            type="text"
-                            name="q"
-                            id="player-search-input"
-                            class="player-search-input"
-                            placeholder="Search player name..."
-                            value="{{ search_query }}"
-                            autocomplete="off"
-                        >
-                        <ul id="player-suggestions" class="player-suggestions" hidden></ul>
-                    </div>
-                    <button type="submit" class="player-search-btn">Search</button>
-                </form>
-            </div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Player</th>
-                            <th class="text-center">Rating</th>
-                            <th class="text-center">Peak Rating</th>
-                            <th class="text-center">Games</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for player in players %}
-                        <tr class="clickable-row" onclick="window.location='{% url 'player_detail' player.pk %}'">
-                            <td class="rank-cell-small">{{ player.rank }}</td>
-                            <td class="name-cell-small">{{ player.name }}</td>
-                            <td class="rating-cell-small">{{ player.rating }}</td>
-                            <td class="peak-cell-small">{{ player.peak_rating }}</td>
-                            <td class="text-center">{{ player.games_played }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" style="text-align:center;padding:2rem;color:#999">
-                                {% if search_query %}
-                                No players found for "{{ search_query }}".
-                                {% else %}
-                                No players yet. <a href="{% url 'player_create' %}" class="btn btn-hero btn-sm">Add one!</a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+<div class="panel">
+    <form method="get" class="search-row" role="search">
+        <div class="search-input-wrap">
+            <input
+                type="search"
+                name="q"
+                class="form-control"
+                placeholder="Search player name..."
+                value="{{ search_query }}"
+                autocomplete="off"
+                aria-label="Search player name"
+                data-suggest-url="{% url 'player_search_suggestions' %}"
+                data-detail-url="{% url 'player_detail' 0 %}"
+            >
         </div>
+        <button type="submit" class="btn btn-ink">Search</button>
+        {% if search_query %}
+            <a href="{% url 'player_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
+    </form>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="text-center">Rank</th>
+                    <th>Player</th>
+                    <th class="num">Rating</th>
+                    <th class="num d-none d-sm-table-cell">Peak</th>
+                    <th class="num">Games</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                <tr data-href="{% url 'player_detail' player.pk %}" {% if player.rank <= 3 %}class="podium"{% endif %}>
+                    <td class="rank-cell">
+                        {% if player.rank == 1 %}🥇{% elif player.rank == 2 %}🥈{% elif player.rank == 3 %}🥉{% else %}{{ player.rank }}{% endif %}
+                    </td>
+                    <td><a class="player-link" href="{% url 'player_detail' player.pk %}">{{ player.name }}</a></td>
+                    <td class="num rating-strong">{{ player.rating }}</td>
+                    <td class="num text-muted d-none d-sm-table-cell">{{ player.peak_rating }}</td>
+                    <td class="num">{{ player.games_played }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        {% if search_query %}
+                            No players found for "{{ search_query }}".
+                        {% else %}
+                            No players yet. <a href="{% url 'player_create' %}">Add the first one</a>.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
-
-<script>
-    (function () {
-        var searchInput = document.getElementById('player-search-input');
-        var suggestionList = document.getElementById('player-suggestions');
-        var form = searchInput ? searchInput.closest('form') : null;
-        var resetUrl = '{% url "player_list" %}';
-        var hadInitialQuery = '{{ search_query|escapejs }}'.trim().length > 0;
-        var debounceTimer;
-
-        if (!searchInput || !suggestionList || !form) {
-            return;
-        }
-
-        function hideSuggestions() {
-            suggestionList.hidden = true;
-            suggestionList.innerHTML = '';
-        }
-
-        function renderSuggestions(items) {
-            if (!items.length) {
-                hideSuggestions();
-                return;
-            }
-
-            suggestionList.innerHTML = '';
-            items.forEach(function (item) {
-                var li = document.createElement('li');
-                li.className = 'player-suggestion-item';
-                var nameSpan = document.createElement('span');
-                nameSpan.textContent = item.name;
-                var ratingSpan = document.createElement('span');
-                ratingSpan.className = 'player-suggestion-rating';
-                ratingSpan.textContent = 'Rating ' + item.rating;
-                li.appendChild(nameSpan);
-                li.appendChild(ratingSpan);
-                li.addEventListener('mousedown', function (event) {
-                    event.preventDefault();
-                    searchInput.value = item.name;
-                    hideSuggestions();
-                    form.submit();
-                });
-                suggestionList.appendChild(li);
-            });
-            suggestionList.hidden = false;
-        }
-
-        function fetchSuggestions(query) {
-            var endpoint = '{% url "player_search_suggestions" %}?q=' + encodeURIComponent(query);
-            fetch(endpoint)
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch suggestions');
-                    }
-                    return response.json();
-                })
-                .then(function (data) {
-                    renderSuggestions(data.results || []);
-                })
-                .catch(function () {
-                    hideSuggestions();
-                });
-        }
-
-        searchInput.addEventListener('input', function () {
-            var query = searchInput.value.trim();
-            clearTimeout(debounceTimer);
-
-            if (query.length < 1) {
-                hideSuggestions();
-                if (hadInitialQuery) {
-                    window.location.href = resetUrl;
-                }
-                return;
-            }
-
-            debounceTimer = setTimeout(function () {
-                fetchSuggestions(query);
-            }, 180);
-        });
-
-        searchInput.addEventListener('blur', function () {
-            setTimeout(hideSuggestions, 120);
-        });
-
-        searchInput.addEventListener('focus', function () {
-            var query = searchInput.value.trim();
-            if (query.length > 0) {
-                fetchSuggestions(query);
-            }
-        });
-    })();
-</script>
 {% endblock %}

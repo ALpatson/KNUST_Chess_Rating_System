@@ -1,0 +1,52 @@
+<div class="table-responsive">
+    <table class="data-table stack-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>White</th>
+                <th>Black</th>
+                <th class="text-center">Result</th>
+                <th class="text-center">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+            <tr>
+                <td data-label="Date" class="text-nowrap">{{ match.created_at|date:"M j, Y" }}<br><span class="small text-muted">{{ match.created_at|date:"H:i" }}</span></td>
+                <td data-label="White">
+                    <a class="player-link" href="{% url 'player_detail' match.player_white_id %}">{{ match.player_white.name }}</a>
+                    <div class="small text-muted">
+                        {{ match.white_rating_before }} →
+                        <span class="{% if match.white_rating_change > 0 %}text-gain{% elif match.white_rating_change < 0 %}text-drop{% else %}text-flat{% endif %}">{{ match.white_rating_after }} ({% if match.white_rating_change > 0 %}+{% endif %}{{ match.white_rating_change }})</span>
+                    </div>
+                </td>
+                <td data-label="Black">
+                    <a class="player-link" href="{% url 'player_detail' match.player_black_id %}">{{ match.player_black.name }}</a>
+                    <div class="small text-muted">
+                        {{ match.black_rating_before }} →
+                        <span class="{% if match.black_rating_change > 0 %}text-gain{% elif match.black_rating_change < 0 %}text-drop{% else %}text-flat{% endif %}">{{ match.black_rating_after }} ({% if match.black_rating_change > 0 %}+{% endif %}{{ match.black_rating_change }})</span>
+                    </div>
+                </td>
+                <td data-label="Result" class="text-center fw-bold text-nowrap">
+                    {% if match.result == 'W' %}1 – 0{% elif match.result == 'B' %}0 – 1{% else %}½ – ½{% endif %}
+                </td>
+                <td data-label="Status" class="text-center">
+                    {% if match.is_reverted %}
+                        <span class="chip chip-muted" title="Reverted {{ match.reverted_at|date:'M j, Y H:i' }}">Reverted</span>
+                    {% elif show_revert and not match.is_expired %}
+                        <form method="post" action="{% url 'match_revert' match.pk %}" class="d-inline" data-confirm="Revert this match and restore both players' previous ratings?">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Revert</button>
+                        </form>
+                    {% else %}
+                        <span class="chip chip-w">Rated</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-state">No matches found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

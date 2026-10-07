@@ -1,21 +1,31 @@
 {% extends 'ratings/base.html' %}
 
-{% block title %}Enter Passcode{% endblock %}
+{% block title %}Welcome{% endblock %}
+
+{% block navbar %}{% endblock %}
 
 {% block content %}
-<div style="max-width:480px;margin:4rem auto;padding:2rem;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.08);">
-    <h2 style="margin-top:0;color:#222;text-align:center">Enter Access Passcode</h2>
-    {% if error %}
-    <div style="color:#b00020;padding:0.6rem 0;text-align:center">{{ error }}</div>
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <div style="margin:1rem 0;">
-            <input name="passcode" type="password" placeholder="Enter passcode" style="width:100%;padding:0.8rem;border:1px solid #ddd;border-radius:6px;font-size:1rem" autofocus>
+<div class="gate">
+    <span class="brand-mark" aria-hidden="true">♚</span>
+    <h1>KNUST Chess Club</h1>
+    <p class="mb-4">Enter the club passcode to view ratings, record matches and run tournaments.</p>
+
+    <div class="panel text-start">
+        <div class="panel-body">
+            <form method="post">
+                {% csrf_token %}
+                <label for="passcode" class="form-label">Passcode</label>
+                <input id="passcode" name="passcode" type="password" class="form-control form-control-lg" placeholder="Enter passcode" autocomplete="current-password" autofocus required>
+                {% if error %}
+                    <div class="field-error" role="alert">{{ error }}</div>
+                {% endif %}
+                <button type="submit" class="btn btn-gold btn-lg w-100 mt-3">Unlock</button>
+            </form>
         </div>
-        <div style="text-align:center;margin-top:1rem;">
-            <button type="submit" style="background:#b58863;color:#fff;padding:0.6rem 1.2rem;border-radius:6px;border:none;font-weight:700;">Unlock</button>
-        </div>
-    </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<style>.app-container { padding-top: 2rem; }</style>
 {% endblock %}

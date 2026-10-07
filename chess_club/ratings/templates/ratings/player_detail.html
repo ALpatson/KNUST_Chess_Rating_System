@@ -3,48 +3,179 @@
 {% block title %}{{ player.name }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-lg-7 col-md-9 mx-auto">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">{{ player.name }}</h4>
-                <span class="badge bg-dark" style="font-size: 0.95rem;">Rated Player</span>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-12 col-sm-6">
-                        <div class="border rounded p-3 h-100 bg-light">
-                            <div class="text-muted small">Current Rating</div>
-                            <div class="h3 mb-0">{{ player.rating }}</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <div class="border rounded p-3 h-100 bg-light">
-                            <div class="text-muted small">Peak Rating</div>
-                            <div class="h3 mb-0">{{ player.peak_rating }}</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <div class="border rounded p-3 h-100 bg-light">
-                            <div class="text-muted small">Games Played</div>
-                            <div class="h3 mb-0">{{ player.games_played }}</div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <div class="border rounded p-3 h-100 bg-light">
-                            <div class="text-muted small">Joined</div>
-                            <div class="h5 mb-0">{{ player.created_at|date:"M d, Y" }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex gap-2 mt-4 flex-wrap">
-                    <a href="{% url 'player_update' player.pk %}" class="btn btn-primary">Edit Player</a>
-                    <a href="{% url 'player_delete' player.pk %}" class="btn btn-danger">Delete Player</a>
-                    <a href="{% url 'player_list' %}" class="btn btn-secondary">Back to Players</a>
-                </div>
-            </div>
-        </div>
+<div class="page-head">
+    <div>
+        <a href="{% url 'player_list' %}" class="eyebrow text-decoration-none">← Rankings</a>
+        <h1>{{ player.name }}</h1>
+        <p class="lead-text">Ranked #{{ rank }} in the club · Joined {{ player.created_at|date:"M j, Y" }}</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'player_update' player.pk %}" class="btn btn-glass">Edit</a>
+        <a href="{% url 'player_delete' player.pk %}" class="btn btn-glass">Delete</a>
     </div>
 </div>
+
+<div class="panel">
+    <div class="panel-body">
+        <div class="stat-grid">
+            <div class="stat">
+                <div class="stat-label">Rating</div>
+                <div class="stat-value">{{ player.rating }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Peak</div>
+                <div class="stat-value">{{ player.peak_rating }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Games</div>
+                <div class="stat-value">{{ player.games_played }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Rank</div>
+                <div class="stat-value">#{{ rank }}</div>
+            </div>
+        </div>
+
+        {% if total_games_listed %}
+        <div class="mt-4">
+            <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                <strong>Record</strong>
+                <span>
+                    <span class="chip chip-w">{{ record.W }} W</span>
+                    <span class="chip chip-d">{{ record.D }} D</span>
+                    <span class="chip chip-l">{{ record.L }} L</span>
+                </span>
+            </div>
+            <div class="record-bar" aria-hidden="true">
+                <span class="w" style="flex: {{ record.W }}"></span>
+                <span class="d" style="flex: {{ record.D }}"></span>
+                <span class="l" style="flex: {{ record.L }}"></span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h2>Rating over time</h2>
+        {% if total_games_listed %}<span class="hint">{{ total_games_listed }} recorded game{{ total_games_listed|pluralize }}</span>{% endif %}
+    </div>
+    <div class="panel-body">
+        {% if chart_data|length > 1 %}
+            <div class="chart-wrap"><canvas id="ratingChart" aria-label="Rating history chart" role="img"></canvas></div>
+        {% else %}
+            <p class="text-muted mb-0">The graph will appear once {{ player.name }} has recorded games.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-head">
+        <h2>Recent games</h2>
+        <a href="{% url 'match_history' %}?player={{ player.pk }}" class="btn btn-sm btn-outline-secondary">Full history</a>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table stack-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Opponent</th>
+                    <th class="text-center">Result</th>
+                    <th class="num">Change</th>
+                    <th class="num">Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in games %}
+                <tr>
+                    <td data-label="Date">
+                        {{ game.match.created_at|date:"M j, Y" }}
+                        {% if game.tournament %}<br><a href="{% url 'tournament_detail' game.tournament.pk %}" class="small text-muted">{{ game.tournament.name }}</a>{% endif %}
+                    </td>
+                    <td data-label="Opponent">
+                        <span class="color-dot {% if game.color == 'White' %}white{% else %}black{% endif %}" title="Played {{ game.color }}"></span>
+                        <a class="player-link" href="{% url 'player_detail' game.opponent.pk %}">{{ game.opponent.name }}</a>
+                        <span class="text-muted small">({{ game.opponent_rating }})</span>
+                    </td>
+                    <td data-label="Result" class="text-center">
+                        <span class="chip chip-{{ game.outcome|lower }}">{% if game.outcome == 'W' %}Win{% elif game.outcome == 'L' %}Loss{% else %}Draw{% endif %}</span>
+                    </td>
+                    <td data-label="Change" class="num {% if game.change > 0 %}text-gain{% elif game.change < 0 %}text-drop{% else %}text-flat{% endif %}">
+                        {% if game.change > 0 %}+{% endif %}{{ game.change }}
+                    </td>
+                    <td data-label="Rating" class="num">{{ game.rating_after }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="empty-state">No games recorded yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if total_games_listed > games|length %}
+        <div class="panel-foot">Showing the latest {{ games|length }} games. <a href="{% url 'match_history' %}?player={{ player.pk }}">See all</a>.</div>
+    {% endif %}
+</div>
+
+{% if tournaments %}
+<div class="panel">
+    <div class="panel-head"><h2>Tournaments</h2></div>
+    <ul class="list-group list-group-flush">
+        {% for t in tournaments %}
+            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{% url 'tournament_detail' t.pk %}">
+                <span><strong>{{ t.name }}</strong> <span class="text-muted small">· {{ t.start_date|date:"M j, Y" }}</span></span>
+                <span class="chip {% if t.status == 'finished' %}chip-muted{% elif t.status == 'active' %}chip-live{% else %}chip-gold{% endif %}">{{ t.get_status_display }}</span>
+            </a>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if chart_data|length > 1 %}
+{{ chart_data|json_script:"chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var points = JSON.parse(document.getElementById('chart-data').textContent);
+    var ctx = document.getElementById('ratingChart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    var ctx2d = ctx.getContext('2d');
+    var fill = ctx2d.createLinearGradient(0, 0, 0, 260);
+    fill.addColorStop(0, 'rgba(242, 195, 107, 0.35)');
+    fill.addColorStop(1, 'rgba(242, 195, 107, 0)');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: points.map(function (p) { return p.label; }),
+            datasets: [{
+                data: points.map(function (p) { return p.rating; }),
+                borderColor: '#cc8a2f',
+                backgroundColor: fill,
+                fill: true,
+                tension: 0.25,
+                pointRadius: points.length > 40 ? 0 : 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#cc8a2f',
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function (c) { return 'Rating ' + c.parsed.y; } } }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { maxTicksLimit: 8, color: '#6b7280' } },
+                y: { grid: { color: '#f0ece4' }, ticks: { precision: 0, color: '#6b7280' } }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
 {% endblock %}

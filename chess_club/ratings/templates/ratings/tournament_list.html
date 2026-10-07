@@ -1,0 +1,51 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Tournaments{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">Swiss system</span>
+        <h1>Tournaments</h1>
+        <p class="lead-text">Automatic pairings, rated games and live standings.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'tournament_create' %}" class="btn btn-gold">+ New Tournament</a>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="table-responsive">
+        <table class="data-table stack-table">
+            <thead>
+                <tr>
+                    <th>Tournament</th>
+                    <th>Date</th>
+                    <th class="num">Players</th>
+                    <th class="num">Round</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tournaments %}
+                <tr data-href="{% url 'tournament_detail' t.pk %}">
+                    <td data-label="Tournament"><a class="player-link" href="{% url 'tournament_detail' t.pk %}">{{ t.name }}</a></td>
+                    <td data-label="Date">{{ t.start_date|date:"M j, Y" }}</td>
+                    <td data-label="Players" class="num">{{ t.players.all|length }}</td>
+                    <td data-label="Round" class="num">{{ t.rounds.all|length }} / {{ t.total_rounds }}</td>
+                    <td data-label="Status" class="text-center">
+                        <span class="chip {% if t.status == 'finished' %}chip-muted{% elif t.status == 'active' %}chip-live{% else %}chip-gold{% endif %}">{{ t.get_status_display }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        No tournaments yet. <a href="{% url 'tournament_create' %}">Create the first one</a>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

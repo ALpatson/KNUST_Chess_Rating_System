@@ -1,0 +1,161 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <a href="{% url 'tournament_list' %}" class="eyebrow text-decoration-none">← Tournaments</a>
+        <h1>{{ tournament.name }}</h1>
+        <p class="lead-text">
+            {{ tournament.start_date|date:"M j, Y" }} · {{ players|length }} players ·
+            {% if current_round %}Round {{ current_round.number }} of {{ tournament.total_rounds }}{% else %}{{ tournament.total_rounds }} rounds{% endif %}
+            · {% if tournament.is_round_robin %}Round robin{% else %}Swiss{% endif %}
+            · <span class="chip {% if tournament.status == 'finished' %}chip-muted{% elif tournament.status == 'active' %}chip-live{% else %}chip-gold{% endif %}">{{ tournament.get_status_display }}</span>
+        </p>
+    </div>
+    <div class="page-actions">
+        {% if tournament.status == 'draft' %}
+            <a href="{% url 'tournament_update' tournament.pk %}" class="btn btn-glass">Edit</a>
+        {% endif %}
+        {% if current_round %}
+            <a href="{% url 'tournament_standings_pdf' tournament.pk %}" class="btn btn-glass">Standings PDF</a>
+        {% endif %}
+        {% if not has_results %}
+            <a href="{% url 'tournament_delete' tournament.pk %}" class="btn btn-glass">Delete</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if tournament.status == 'draft' %}
+    <div class="panel">
+        <div class="panel-head">
+            <h2>Ready to start?</h2>
+            <span class="hint">
+                {% if tournament.is_round_robin %}
+                    Round robin: with this many rounds, everyone plays (almost) everyone.
+                {% else %}
+                    Swiss: round 1 pairs the top half against the bottom half by rating.
+                {% endif %}
+            </span>
+        </div>
+        <div class="panel-body">
+            <form method="post" action="{% url 'tournament_pair' tournament.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-gold btn-lg">Start tournament &amp; pair round 1</button>
+            </form>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr><th class="text-center">Seed</th><th>Player</th><th class="num">Rating</th></tr></thead>
+                <tbody>
+                    {% for p in players %}
+                    <tr>
+                        <td class="rank-cell">{{ forloop.counter }}</td>
+                        <td><a class="player-link" href="{% url 'player_detail' p.pk %}">{{ p.name }}</a></td>
+                        <td class="num">{{ p.rating }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+{% if current_round %}
+<div class="row g-4">
+    <div class="col-xl-6">
+        <div class="panel" id="current-round">
+            <div class="panel-head">
+                <h2>Round {{ current_round.number }}{% if tournament.status == 'finished' %} (final){% endif %}</h2>
+                <a href="{% url 'tournament_round_pdf' tournament.pk current_round.number %}" class="btn btn-sm btn-outline-secondary">Pairings PDF</a>
+            </div>
+            {% include 'ratings/_round_boards.html' with round=current_round editable=True %}
+            {% if tournament.status == 'active' %}
+                <div class="panel-foot">
+                    {% if incomplete_count %}
+                        {{ incomplete_count }} board{{ incomplete_count|pluralize }} still need{{ incomplete_count|pluralize:"s," }} a result.
+                        Tap <strong>1-0</strong>, <strong>½</strong> or <strong>0-1</strong> to record it.
+                    {% elif is_last_round %}
+                        <form method="post" action="{% url 'tournament_finish' tournament.pk %}" class="d-flex flex-wrap align-items-center justify-content-between gap-2" data-confirm="Finish the tournament? Standings will be final.">
+                            {% csrf_token %}
+                            <span>All results are in for the last round.</span>
+                            <button type="submit" class="btn btn-gold">Finish tournament</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'tournament_pair' tournament.pk %}" class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            {% csrf_token %}
+                            <span>All results are in.</span>
+                            <button type="submit" class="btn btn-gold">Pair round {{ current_round.number|add:1 }}</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="panel">
+            <div class="panel-head">
+                <h2>{% if tournament.status == 'finished' %}Final standings{% else %}Standings{% endif %}</h2>
+                <span class="hint">Tiebreaks: Buchholz, then Sonneborn-Berger</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Player</th>
+                            <th class="num">Pts</th>
+                            <th class="num d-none d-sm-table-cell" title="Buchholz: sum of opponents' scores">Buch.</th>
+                            <th class="num d-none d-md-table-cell" title="Sonneborn-Berger">S-B</th>
+                            <th class="num">W/D/L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in standings %}
+                        <tr {% if e.rank <= 3 and tournament.status == 'finished' %}class="podium"{% endif %}>
+                            <td class="rank-cell">
+                                {% if tournament.status == 'finished' and e.rank == 1 %}🏆{% else %}{{ e.rank }}{% endif %}
+                            </td>
+                            <td>
+                                <a class="player-link" href="{% url 'player_detail' e.player_id %}">{{ e.name }}</a>
+                                <span class="small text-muted">{{ e.rating }}</span>
+                            </td>
+                            <td class="num rating-strong">{{ e.points|floatformat:"-1" }}</td>
+                            <td class="num d-none d-sm-table-cell">{{ e.buchholz|floatformat:"-1" }}</td>
+                            <td class="num d-none d-md-table-cell">{{ e.sonneborn_berger|floatformat:"-2" }}</td>
+                            <td class="num text-muted small">{{ e.wins }}/{{ e.draws }}/{{ e.losses }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if past_rounds %}
+<div class="panel">
+    <div class="panel-head"><h2>Previous rounds</h2></div>
+    <div class="accordion accordion-flush" id="past-rounds">
+        {% for r in past_rounds %}
+        <div class="accordion-item">
+            <h3 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#round-{{ r.number }}" aria-expanded="false" aria-controls="round-{{ r.number }}">
+                    Round {{ r.number }}
+                </button>
+            </h3>
+            <div id="round-{{ r.number }}" class="accordion-collapse collapse" data-bs-parent="#past-rounds">
+                {% include 'ratings/_round_boards.html' with round=r editable=True %}
+                <div class="panel-foot">
+                    <a href="{% url 'tournament_round_pdf' tournament.pk r.number %}">Download round {{ r.number }} PDF</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

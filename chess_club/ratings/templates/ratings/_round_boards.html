@@ -1,0 +1,47 @@
+<ul class="board-list">
+    {% for p in round.pairings.all %}
+    <li class="board">
+        <div class="board-no"><small>Board</small>{{ p.board }}</div>
+        <div class="board-players">
+            <div class="board-player">
+                <span class="color-dot white" title="White"></span>
+                <a class="name player-link" href="{% url 'player_detail' p.player_white_id %}">{{ p.player_white.name }}</a>
+                <span class="rating">{{ p.player_white.rating }}</span>
+            </div>
+            {% if p.is_bye %}
+                <div class="board-player text-muted">Bye — 1 point</div>
+            {% else %}
+                <div class="board-player">
+                    <span class="color-dot black" title="Black"></span>
+                    <a class="name player-link" href="{% url 'player_detail' p.player_black_id %}">{{ p.player_black.name }}</a>
+                    <span class="rating">{{ p.player_black.rating }}</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="board-actions">
+            {% if p.is_bye %}
+                <span class="chip chip-gold">BYE</span>
+            {% elif p.result %}
+                <span class="chip {% if p.result == 'D' %}chip-d{% else %}chip-w{% endif %}">
+                    {% if p.result == 'W' %}1 – 0{% elif p.result == 'B' %}0 – 1{% else %}½ – ½{% endif %}
+                </span>
+                {% if editable and tournament.status == 'active' and p.match_id %}
+                    <form method="post" action="{% url 'pairing_undo' tournament.pk p.pk %}" data-confirm="Undo this result? Both players' ratings will be restored.">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-link text-muted">Undo</button>
+                    </form>
+                {% endif %}
+            {% elif editable and tournament.status == 'active' %}
+                <form method="post" action="{% url 'pairing_result' tournament.pk p.pk %}" class="d-flex gap-1 w-100">
+                    {% csrf_token %}
+                    <button type="submit" name="result" value="W" class="result-btn" title="White won">1-0</button>
+                    <button type="submit" name="result" value="D" class="result-btn" title="Draw">½</button>
+                    <button type="submit" name="result" value="B" class="result-btn" title="Black won">0-1</button>
+                </form>
+            {% else %}
+                <span class="chip chip-muted">Pending</span>
+            {% endif %}
+        </div>
+    </li>
+    {% endfor %}
+</ul>

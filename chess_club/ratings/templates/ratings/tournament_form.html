@@ -1,0 +1,92 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <a href="{% if object %}{% url 'tournament_detail' object.pk %}{% else %}{% url 'tournament_list' %}{% endif %}" class="eyebrow text-decoration-none">← {% if object %}{{ object.name }}{% else %}Tournaments{% endif %}</a>
+        <h1>{{ form_title }}</h1>
+    </div>
+</div>
+
+<form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="panel">
+                <div class="panel-head"><h2>Details</h2></div>
+                <div class="panel-body">
+                    {% if form.non_field_errors %}<div class="field-error mb-3">{{ form.non_field_errors }}</div>{% endif %}
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="field-error">{{ form.name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.start_date.id_for_label }}" class="form-label">Date</label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}<div class="field-error">{{ form.start_date.errors }}</div>{% endif %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="{{ form.total_rounds.id_for_label }}" class="form-label">Number of rounds</label>
+                        {{ form.total_rounds }}
+                        <p class="field-help">
+                            Common choices: 5 rounds for up to 16 players, 7 for up to 64.
+                            If you choose enough rounds for everyone to play (almost) everyone, it runs as a round robin.
+                        </p>
+                        {% if form.total_rounds.errors %}<div class="field-error">{{ form.total_rounds.errors }}</div>{% endif %}
+                    </div>
+                    <div class="d-none d-lg-block">
+                        <button type="submit" class="btn btn-gold btn-lg w-100">{{ submit_text }}</button>
+                        <p class="field-help text-center mt-2">You can still change players and rounds until round 1 is paired.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Players</h2>
+                    <span class="chip chip-gold"><span id="picked-count">0</span>&nbsp;selected</span>
+                </div>
+                <div class="panel-body">
+                    <input type="search" class="form-control mb-3" placeholder="Filter players..." aria-label="Filter players"
+                           data-filter-target="#player-picker" data-count-target="#picked-count">
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="all">Select shown</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-pick="none">Clear all</button>
+                    </div>
+                    {% if form.players.errors %}<div class="field-error mb-2">{{ form.players.errors }}</div>{% endif %}
+                    <div class="player-picker" id="player-picker">
+                        {{ form.players }}
+                    </div>
+                    <div class="d-lg-none mt-3">
+                        <button type="submit" class="btn btn-gold btn-lg w-100">{{ submit_text }}</button>
+                        <p class="field-help text-center mt-2">You can still change players and rounds until round 1 is paired.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var picker = document.getElementById('player-picker');
+    document.querySelectorAll('[data-pick]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var selectAll = btn.getAttribute('data-pick') === 'all';
+            picker.querySelectorAll('input[type=checkbox]').forEach(function (box) {
+                if (selectAll && box.closest('[hidden]')) return; // only select players currently shown by the filter
+                box.checked = selectAll;
+            });
+            picker.dispatchEvent(new Event('change'));
+        });
+    });
+});
+</script>
+{% endblock %}

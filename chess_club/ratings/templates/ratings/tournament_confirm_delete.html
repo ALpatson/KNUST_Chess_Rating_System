@@ -1,0 +1,18 @@
+{% extends 'ratings/base.html' %}
+
+{% block title %}Delete {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="panel panel-narrow">
+    <div class="panel-head"><h2>Delete tournament</h2></div>
+    <div class="panel-body">
+        <p>Are you sure you want to delete <strong>{{ tournament.name }}</strong>?</p>
+        <p class="text-muted small mb-4">No rated games have been played, so no ratings are affected. This cannot be undone.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-lg w-100">Yes, delete tournament</button>
+            <a href="{% url 'tournament_detail' tournament.pk %}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

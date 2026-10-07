@@ -3,35 +3,28 @@
 {% block title %}{{ form_title|default:'Add Player' }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-6 mx-auto">
-        <div class="card">
-            <div class="card-header">
-                <h5>{{ form_title|default:'Add New Player' }}</h5>
+<div class="panel panel-narrow">
+    <div class="panel-head"><h2>{{ form_title|default:'Add New Player' }}</h2></div>
+    <div class="panel-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="field-error mb-3">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">Player name</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="field-error">{{ form.name.errors }}</div>{% endif %}
             </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ form.name.id_for_label }}" class="form-label">Player Name</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                            <div class="alert alert-danger">{{ form.name.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="mb-3">
-                        <label for="{{ form.rating.id_for_label }}" class="form-label">Starting Rating</label>
-                        {{ form.rating }}
-                        <small class="text-muted">Default is 1200</small>
-                        {% if form.rating.errors %}
-                            <div class="alert alert-danger">{{ form.rating.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">{{ submit_text|default:'Add Player' }}</button>
-                    <a href="{% url 'player_list' %}" class="btn btn-secondary w-100 mt-2">Cancel</a>
-                </form>
+            <div class="mb-4">
+                <label for="{{ form.rating.id_for_label }}" class="form-label">{% if object %}Rating{% else %}Starting rating{% endif %}</label>
+                {{ form.rating }}
+                <p class="field-help">
+                    {% if object %}Only change this to correct a mistake. Peak rating goes up automatically if needed.{% else %}New players usually start at 1500.{% endif %}
+                </p>
+                {% if form.rating.errors %}<div class="field-error">{{ form.rating.errors }}</div>{% endif %}
             </div>
-        </div>
+            <button type="submit" class="btn btn-gold btn-lg w-100">{{ submit_text|default:'Add Player' }}</button>
+            <a href="{% if object %}{% url 'player_detail' object.pk %}{% else %}{% url 'player_list' %}{% endif %}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+        </form>
     </div>
 </div>
 {% endblock %}

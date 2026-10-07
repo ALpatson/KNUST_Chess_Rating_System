@@ -135,7 +135,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Serve app static files straight from the source folders, so no collectstatic step is needed on Vercel.
 WHITENOISE_USE_FINDERS = True
 

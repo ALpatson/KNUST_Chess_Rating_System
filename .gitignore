@@ -5,3 +5,4 @@ venv/
 .env
 .vercel/
 chess_club/staticfiles/
+db_live.sqlite3
