@@ -558,8 +558,12 @@ body::before {
     background: #fcfbf8;
 }
 
-.search-row .search-input-wrap {
+/* Anchors the suggestion dropdown under its input, wherever the input is used. */
+.search-input-wrap {
     position: relative;
+}
+
+.search-row .search-input-wrap {
     flex: 1;
 }
 
